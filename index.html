@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Control Edificio & ESP32</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 15px; background: #f0f4f8; color: #102a43; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h1, h2, h3 { color: #0b69a3; margin-top: 0; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #bcccdc; font-size: 1rem; }
+        button { background: #0b69a3; color: white; font-weight: bold; border: none; cursor: pointer; }
+        button:active { transform: scale(0.98); }
+        .btn-esp32 { background: #27ab83; font-size: 1.2rem; padding: 18px; }
+        .btn-backup { background: #e12d39; }
+        .role-badge { display: inline-block; padding: 4px 12px; background: #e0f2fe; color: #0369a1; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #d9e2ec; padding: 8px; text-align: left; font-size: 0.9rem; }
+        th { background: #f0f4f8; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>🛠️ Edificio Test & ESP32</h1>
+        <label><b>Seleccionar Rol:</b></label>
+        <select id="roleSelect" onchange="cambiarRol()">
+            <option value="inquilino">Inquilino (Apertura de Puerta)</option>
+            <option value="porteria">Portería (Visitas)</option>
+            <option value="admin">Administración</option>
+            <option value="superadmin">SuperAdmin (Juan Ángel - Backup)</option>
+        </select>
+        <div style="margin-top:10px;">Rol activo: <span class="role-badge" id="roleBadge">Inquilino</span></div>
+    </div>
+
+    <!-- SECTOR INQUILINO / ESP32 -->
+    <div id="secInquilino" class="card">
+        <h2>🚪 Control de Acceso (ESP32)</h2>
+        <label>IP del ESP32:</label>
+        <input type="text" id="ipEsp32" value="192.168.1.100">
+        <button class="btn-esp32" onclick="abrirPuerta()">🔓 ABRIR PORTÓN / PUERTA</button>
+    </div>
+
+    <!-- SECTOR PORTERÍA -->
+    <div id="secPorteria" class="card" style="display:none;">
+        <h2>📝 Registro de Visitas (Portería)</h2>
+        <input type="text" id="visNombre" placeholder="Nombre de la Visita">
+        <input type="text" id="visCi" placeholder="Cédula de Identidad">
+        <input type="text" id="visDepto" placeholder="Depto Destino (Ej: 402)">
+        <button onclick="registrarVisita()">Registrar Ingreso</button>
+
+        <h3>Historial de Visitas</h3>
+        <table>
+            <thead>
+                <tr><th>Hora</th><th>Visita</th><th>CI</th><th>Depto</th></tr>
+            </thead>
+            <tbody id="tablaVisitas"></tbody>
+        </table>
+    </div>
+
+    <!-- SECTOR SUPERADMIN / BACKUP -->
+    <div id="secSuperAdmin" class="card" style="display:none;">
+        <h2>🔐 Panel Maestro SuperAdmin</h2>
+        <p>Descargá o restaurá copias de seguridad en formato JSON de la base de datos de prueba.</p>
+        <button class="btn-backup" onclick="exportarBackup()">📥 Descargar Backup JSON</button>
+        <br><br>
+        <label><b>Restaurar Backup:</b></label>
+        <input type="file" id="fileInput" accept=".json" onchange="importarBackup(event)">
+    </div>
+
+    <script>
+        let rolActual = "inquilino";
+        const PASS_SUPER = "juan2026";
+        let visitas = JSON.parse(localStorage.getItem('test_visitas')) || [];
+
+        function cambiarRol() {
+            let sel = document.getElementById('roleSelect').value;
+            if (sel === 'superadmin') {
+                let p = prompt("Ingresá la contraseña de SuperAdmin:");
+                if (p !== PASS_SUPER) {
+                    alert("Contraseña incorrecta");
+                    document.getElementById('roleSelect').value = rolActual;
+                    return;
+                }
+            }
+            rolActual = sel;
+            document.getElementById('roleBadge').innerText = sel.toUpperCase();
+            
+            document.getElementById('secInquilino').style.display = (sel === 'inquilino' || sel === 'superadmin') ? 'block' : 'none';
+            document.getElementById('secPorteria').style.display = (sel === 'porteria' || sel === 'admin' || sel === 'superadmin') ? 'block' : 'none';
+            document.getElementById('secSuperAdmin').style.display = (sel === 'superadmin') ? 'block' : 'none';
+        }
+
+        function abrirPuerta() {
+            let ip = document.getElementById('ipEsp32').value;
+            alert("Enviando señal de apertura a: http://" + ip + "/abrir");
+            fetch("http://" + ip + "/abrir")
+                .then(() => alert("¡Comando enviado con éxito!"))
+                .catch(() => alert("Simulación: Comando de apertura enviado al ESP32."));
+        }
+
+        function registrarVisita() {
+            let nom = document.getElementById('visNombre').value;
+            let ci = document.getElementById('visCi').value;
+            let dep = document.getElementById('visDepto').value;
+            if(!nom || !dep) { alert("Completá el nombre y el departamento"); return; }
+
+            let nueva = { hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), nom, ci, dep };
+            visitas.unshift(nueva);
+            localStorage.setItem('test_visitas', JSON.stringify(visitas));
+            renderVisitas();
+            document.getElementById('visNombre').value = '';
+            document.getElementById('visCi').value = '';
+            document.getElementById('visDepto').value = '';
+        }
+
+        function renderVisitas() {
+            let html = '';
+            visitas.forEach(v => {
+                html += `<tr><td>${v.hora}</td><td>${v.nom}</td><td>${v.ci}</td><td>${v.dep}</td></tr>`;
+            });
+            document.getElementById('tablaVisitas').innerHTML = html;
+        }
+        renderVisitas();
+
+        function exportarBackup() {
+            let data = JSON.stringify({ visitas, fecha: new Date() });
+            let blob = new Blob([data], { type: 'application/json' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Backup_Test_Edificio.json';
+            a.click();
+        }
+
+        function importarBackup(e) {
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                let parsed = JSON.parse(event.target.result);
+                if(parsed.visitas) {
+                    visitas = parsed.visitas;
+                    localStorage.setItem('test_visitas', JSON.stringify(visitas));
+                    renderVisitas();
+                    alert("¡Backup de prueba restaurado!");
+                }
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+    </script>
+</body>
+</html>
