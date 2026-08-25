@@ -43,7 +43,7 @@
         </button>
     </div>
 
-    <!-- ENCABEZADO Y PESTAÑAS -->
+    <!-- ENCABEZADO Y NAVEGACIÓN -->
     <header class="w-full max-w-2xl mb-6 bg-white p-6 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 relative overflow-hidden">
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -55,34 +55,37 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-1.5 bg-sand p-1.5 rounded-2xl border border-roseGold-100">
-            <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1">
+        <div class="grid grid-cols-4 gap-1 bg-sand p-1.5 rounded-2xl border border-roseGold-100 text-[11px]">
+            <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1">
                 <i class="fa-solid fa-user-plus"></i> Carga
             </button>
-            <button onclick="switchTab('list')" id="btn-tab-list" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
+            <button onclick="switchTab('list')" id="btn-tab-list" class="py-2.5 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
                 <i class="fa-solid fa-address-book"></i> Clientes (<span id="count-badge">0</span>)
             </button>
-            <button onclick="switchTab('backup')" id="btn-tab-backup" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
+            <button onclick="switchTab('config')" id="btn-tab-config" class="py-2.5 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-gear"></i> Ajustes
+            </button>
+            <button onclick="switchTab('backup')" id="btn-tab-backup" class="py-2.5 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
                 <i class="fa-solid fa-shield-halved"></i> Backup
             </button>
         </div>
     </header>
 
-    <!-- PESTAÑA 1: FORMULARIO COMPLETO -->
+    <!-- PESTAÑA 1: FORMULARIO DE REGISTRO / EDICIÓN -->
     <main id="tab-form" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos del Registro</h2>
-            <span class="text-xs font-semibold text-roseGold-500 bg-roseGold-50 px-2.5 py-1 rounded-full">Nuevo Prospecto</span>
+            <h2 id="form-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos del Registro</h2>
+            <span id="form-badge" class="text-xs font-semibold text-roseGold-500 bg-roseGold-50 px-2.5 py-1 rounded-full">Nuevo Prospecto</span>
         </div>
 
         <form id="crm-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
-            <!-- Nombre Completo -->
+            <input type="hidden" id="editClientId" value="">
+
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Nombre completo del cliente *</label>
                 <input type="text" id="nombreCliente" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- WhatsApp y Origen -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Teléfono *</label>
@@ -101,7 +104,6 @@
                 </div>
             </div>
 
-            <!-- Tipo e Inmueble y Presupuesto -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Inmueble</label>
@@ -120,19 +122,16 @@
                 </div>
             </div>
 
-            <!-- Zona / Barrio de Interés -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Zona / Barrio de Interés</label>
                 <input type="text" id="zonaInteres" placeholder="Ej. Asunción, Villa Morra, Mburucuyá" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- Propiedad Mostrada -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada</label>
                 <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- Asesor Mostró y Asesor Captador -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Asesor que Mostró</label>
@@ -144,7 +143,6 @@
                 </div>
             </div>
 
-            <!-- Contacto Captador y Estado -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Contacto Asesor Captador</label>
@@ -163,15 +161,19 @@
                 </div>
             </div>
 
-            <!-- Fecha y Hora de Visita -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora de la Visita</label>
                 <input type="datetime-local" id="fechaVisita" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <button type="submit" id="btn-save" class="w-full py-4 bg-gradient-to-r from-roseGold-500 to-roseGold-600 hover:from-roseGold-600 hover:to-roseGold-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-roseGold-500/30 transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-sparkles"></i> Cargar Cliente al CRM
-            </button>
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-cancel-edit" onclick="resetForm()" class="py-4 px-5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm rounded-2xl transition-all hidden">
+                    Cancelar
+                </button>
+                <button type="submit" id="btn-save" class="flex-1 py-4 bg-gradient-to-r from-roseGold-500 to-roseGold-600 hover:from-roseGold-600 hover:to-roseGold-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-roseGold-500/30 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-sparkles"></i> <span id="btn-save-text">Cargar Cliente al CRM</span>
+                </button>
+            </div>
         </form>
     </main>
 
@@ -186,7 +188,31 @@
         <div id="clientes-container" class="space-y-3"></div>
     </section>
 
-    <!-- PESTAÑA 3: CENTRO DE BACKUP / RESTAURACIÓN -->
+    <!-- PESTAÑA 3: CONFIGURACIÓN DE MENSAJES DE WHATSAPP -->
+    <section id="tab-config" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-5">
+        <div class="pb-3 border-b border-roseGold-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Personalización de Saludo</h2>
+            <p class="text-xs text-slate-500 mt-1">Configurá el mensaje que se enviará automáticamente por WhatsApp.</p>
+        </div>
+
+        <div class="space-y-3">
+            <label class="block text-xs font-bold text-slate-700">Plantilla del Mensaje</label>
+            <textarea id="msg-template-input" rows="4" class="w-full p-4 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all" placeholder="Escribe tu mensaje usando {nombre}, {propiedad}, {zona}..."></textarea>
+            
+            <div class="bg-roseGold-50/60 p-3 rounded-2xl border border-roseGold-100 space-y-1 text-xs text-slate-600">
+                <p class="font-bold text-roseGold-600">Variables que podés incluir:</p>
+                <p><code class="bg-white px-1.5 py-0.5 rounded border border-roseGold-200 text-roseGold-600 font-mono">{nombre}</code> : Nombre del cliente</p>
+                <p><code class="bg-white px-1.5 py-0.5 rounded border border-roseGold-200 text-roseGold-600 font-mono">{propiedad}</code> : Propiedad mostrada o de interés</p>
+                <p><code class="bg-white px-1.5 py-0.5 rounded border border-roseGold-200 text-roseGold-600 font-mono">{zona}</code> : Barrio o zona de interés</p>
+            </div>
+
+            <button onclick="saveMessageTemplate()" class="w-full py-3.5 bg-roseGold-500 hover:bg-roseGold-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-roseGold-500/20 transition-all">
+                Guardar Mensaje Personalizado
+            </button>
+        </div>
+    </section>
+
+    <!-- PESTAÑA 4: CENTRO DE BACKUP / RESTAURACIÓN -->
     <section id="tab-backup" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-6">
         <div class="pb-3 border-b border-roseGold-100">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Copias de Seguridad</h2>
@@ -252,6 +278,8 @@
     </div>
 
     <script>
+        const DEFAULT_MSG_TEMPLATE = "Hola {nombre}, un gusto saludarte. Te escribo de ELLE Real Estate respecto a tu interés en {propiedad} en la zona de {zona}. ¿Cómo te queda hablar unos minutos?";
+
         function getDeviceId() {
             let id = localStorage.getItem('crm_device_id');
             if (!id) {
@@ -325,48 +353,139 @@
             } else { alert("La clave no es válida para este dispositivo."); }
         }
 
+        // --- GESTIÓN DE PLANTILLAS Y WHATSAPP ---
+        function getMessageTemplate() {
+            return localStorage.getItem('crm_msg_template') || DEFAULT_MSG_TEMPLATE;
+        }
+
+        function saveMessageTemplate() {
+            const val = document.getElementById('msg-template-input').value.trim();
+            if (!val) return alert("Por favor escribe una plantilla.");
+            localStorage.setItem('crm_msg_template', val);
+            showToast("Plantilla de saludo guardada ✨");
+        }
+
+        function openWhatsApp(telefono, nombre, propiedad, zona) {
+            const cleanPhone = telefono.replace(/\D/g, '');
+            let template = getMessageTemplate();
+
+            // Reemplazo dinámico de etiquetas
+            template = template.replace(/\{nombre\}/g, nombre || 'Cliente');
+            template = template.replace(/\{propiedad\}/g, propiedad || 'tu consulta');
+            template = template.replace(/\{zona\}/g, zona || 'tu interés');
+
+            const encodedMsg = encodeURIComponent(template);
+            window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+        }
+
         // --- GESTIÓN DE DATOS Y FORMULARIO ---
         const STORAGE_KEY = 'crm_elle_clientes';
         function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
         function handleFormSubmit(e) {
             e.preventDefault();
+            const editId = document.getElementById('editClientId').value;
             const nombre = document.getElementById('nombreCliente').value;
             const telefono = document.getElementById('telefono').value;
             const propiedad = document.getElementById('propiedadMostrada').value;
             const fecha = document.getElementById('fechaVisita').value;
 
-            const cliente = {
-                id: Date.now(),
-                nombreCliente: nombre,
-                telefono: telefono,
-                origenLead: document.getElementById('origenLead').value,
-                tipoInmueble: document.getElementById('tipoInmueble').value,
-                presupuesto: document.getElementById('presupuesto').value,
-                zonaInteres: document.getElementById('zonaInteres').value,
-                propiedadMostrada: propiedad,
-                asesorMostro: document.getElementById('asesorMostro').value,
-                asesorCaptador: document.getElementById('asesorCaptador').value,
-                contactoCaptador: document.getElementById('contactoCaptador').value,
-                estado: document.getElementById('estado').value,
-                fechaVisita: fecha,
-            };
+            let lista = getClientes();
 
-            const lista = getClientes();
-            lista.unshift(cliente);
+            if (editId) {
+                lista = lista.map(c => {
+                    if (c.id == editId) {
+                        return {
+                            ...c,
+                            nombreCliente: nombre,
+                            telefono: telefono,
+                            origenLead: document.getElementById('origenLead').value,
+                            tipoInmueble: document.getElementById('tipoInmueble').value,
+                            presupuesto: document.getElementById('presupuesto').value,
+                            zonaInteres: document.getElementById('zonaInteres').value,
+                            propiedadMostrada: propiedad,
+                            asesorMostro: document.getElementById('asesorMostro').value,
+                            asesorCaptador: document.getElementById('asesorCaptador').value,
+                            contactoCaptador: document.getElementById('contactoCaptador').value,
+                            estado: document.getElementById('estado').value,
+                            fechaVisita: fecha,
+                        };
+                    }
+                    return c;
+                });
+                showToast("Cliente actualizado ✨");
+            } else {
+                const cliente = {
+                    id: Date.now(),
+                    nombreCliente: nombre,
+                    telefono: telefono,
+                    origenLead: document.getElementById('origenLead').value,
+                    tipoInmueble: document.getElementById('tipoInmueble').value,
+                    presupuesto: document.getElementById('presupuesto').value,
+                    zonaInteres: document.getElementById('zonaInteres').value,
+                    propiedadMostrada: propiedad,
+                    asesorMostro: document.getElementById('asesorMostro').value,
+                    asesorCaptador: document.getElementById('asesorCaptador').value,
+                    contactoCaptador: document.getElementById('contactoCaptador').value,
+                    estado: document.getElementById('estado').value,
+                    fechaVisita: fecha,
+                };
+                lista.unshift(cliente);
+                if (fecha) addToGoogleCalendar(nombre, propiedad, fecha);
+                showToast("Cliente registrado ✨");
+            }
+
             localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-
-            if (fecha) addToGoogleCalendar(nombre, propiedad, fecha);
-
-            document.getElementById('crm-form').reset();
+            resetForm();
             updateBadge();
-            showToast("Cliente registrado ✨");
+            switchTab('list');
         }
 
-        function openWhatsApp(telefono, nombre, propiedad) {
-            const cleanPhone = telefono.replace(/\D/g, '');
-            const mensaje = encodeURIComponent(`Hola ${nombre}, te escribo respecto a ${propiedad || 'tu consulta inmobiliaria'}.`);
-            window.open(`https://wa.me/${cleanPhone}?text=${mensaje}`, '_blank');
+        function editCliente(id) {
+            const lista = getClientes();
+            const cliente = lista.find(c => c.id == id);
+            if (!cliente) return;
+
+            document.getElementById('editClientId').value = cliente.id;
+            document.getElementById('nombreCliente').value = cliente.nombreCliente || '';
+            document.getElementById('telefono').value = cliente.telefono || '';
+            document.getElementById('origenLead').value = cliente.origenLead || 'Instagram';
+            document.getElementById('tipoInmueble').value = cliente.tipoInmueble || 'Departamento';
+            document.getElementById('presupuesto').value = cliente.presupuesto || '';
+            document.getElementById('zonaInteres').value = cliente.zonaInteres || '';
+            document.getElementById('propiedadMostrada').value = cliente.propiedadMostrada || '';
+            document.getElementById('asesorMostro').value = cliente.asesorMostro || '';
+            document.getElementById('asesorCaptador').value = cliente.asesorCaptador || '';
+            document.getElementById('contactoCaptador').value = cliente.contactoCaptador || '';
+            document.getElementById('estado').value = cliente.estado || 'Consulta';
+            document.getElementById('fechaVisita').value = cliente.fechaVisita || '';
+
+            document.getElementById('form-title').textContent = 'Editar Registro';
+            document.getElementById('form-badge').textContent = 'Modificando Ficha';
+            document.getElementById('btn-save-text').textContent = 'Actualizar Cliente';
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            switchTab('form');
+        }
+
+        function resetForm() {
+            document.getElementById('crm-form').reset();
+            document.getElementById('editClientId').value = '';
+            document.getElementById('form-title').textContent = 'Datos del Registro';
+            document.getElementById('form-badge').textContent = 'Nuevo Prospecto';
+            document.getElementById('btn-save-text').textContent = 'Cargar Cliente al CRM';
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        function deleteCliente(id) {
+            if (confirm("¿Deseas eliminar este cliente de la cartera?")) {
+                let lista = getClientes();
+                lista = lista.filter(c => c.id != id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+                renderClientes();
+                updateBadge();
+                showToast("Registro eliminado");
+            }
         }
 
         function addToGoogleCalendar(nombre, propiedad, fechaVisita) {
@@ -408,20 +527,26 @@
                     </div>
 
                     <div class="flex items-center gap-2 pt-2 border-t border-roseGold-100/60">
-                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}', '${c.zonaInteres}')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
                             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                        </button>
+                        <button onclick="editCliente(${c.id})" class="px-3 py-2 bg-white text-slate-700 hover:bg-roseGold-50 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
+                            <i class="fa-solid fa-pen text-roseGold-500"></i> Editar
                         </button>
                         ${c.fechaVisita ? `
                             <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-3 py-2 bg-white text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
                                 <i class="fa-regular fa-calendar-plus text-roseGold-500"></i> Agendar
                             </button>
                         ` : ''}
+                        <button onclick="deleteCliente(${c.id})" class="px-2.5 py-2 text-rose-400 hover:text-rose-600 rounded-xl text-xs">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // --- SISTEMA DE BACKUP Y RESTAURACIÓN ---
+        // --- BACKUP Y EXPORTACIÓN ---
         function downloadBackupJSON() {
             const data = localStorage.getItem(STORAGE_KEY) || '[]';
             const blob = new Blob([data], { type: 'application/json' });
@@ -448,7 +573,7 @@
                         showToast("Base de datos restaurada ✨");
                         switchTab('list');
                     } else { alert("Formato de archivo de respaldo no válido."); }
-                } catch (err) { alert("Error al leer el archivo de copia de seguridad."); }
+                } catch (err) { alert("Error al leer el archivo."); }
             };
             reader.readAsText(file);
         }
@@ -474,19 +599,22 @@
         function switchTab(tab) {
             document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
             document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
+            document.getElementById('tab-config').classList.toggle('hidden', tab !== 'config');
             document.getElementById('tab-backup').classList.toggle('hidden', tab !== 'backup');
             
-            // Actualizar botones activos
-            ['form', 'list', 'backup'].forEach(t => {
+            ['form', 'list', 'config', 'backup'].forEach(t => {
                 const btn = document.getElementById(`btn-tab-${t}`);
                 if (t === tab) {
-                    btn.className = "py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1";
+                    btn.className = "py-2.5 font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1";
                 } else {
-                    btn.className = "py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1";
+                    btn.className = "py-2.5 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1";
                 }
             });
 
             if (tab === 'list') renderClientes();
+            if (tab === 'config') {
+                document.getElementById('msg-template-input').value = getMessageTemplate();
+            }
         }
 
         function updateBadge() { document.getElementById('count-badge').textContent = getClientes().length; }
