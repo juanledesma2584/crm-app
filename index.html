@@ -128,16 +128,22 @@
                 <input type="text" id="zonaInteres" placeholder="Ej. Asunción, Villa Morra, Mburucuyá" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- Campo de Ubicación / Link de Maps -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada</label>
-                    <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada</label>
+                <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            </div>
+
+            <!-- BLOQUE DE UBICACIÓN DESTACADO Y CON BOTÓN DE PEGAR -->
+            <div class="bg-roseGold-50/70 p-3.5 rounded-2xl border border-roseGold-200/80 space-y-1.5">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-bold text-roseGold-600 flex items-center gap-1.5">
+                        <i class="fa-solid fa-map-location-dot text-sm"></i> Ubicación / Link de Google Maps
+                    </label>
+                    <button type="button" onclick="pasteClipboardToLocation()" class="text-[10px] font-bold bg-white text-roseGold-600 px-2.5 py-1 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                        <i class="fa-regular fa-clipboard"></i> Pegar Link
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Link de Google Maps / Ubicación</label>
-                    <input type="url" id="linkUbicacion" placeholder="Ej. https://maps.app.goo.gl/..." class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
-                </div>
+                <input type="url" id="linkUbicacion" placeholder="Pegá el link aquí (Ej. https://maps.app.goo.gl/...)" class="w-full px-4 py-3 bg-white text-slate-800 text-sm rounded-xl border border-roseGold-200 focus:border-roseGold-500 outline-none transition-all">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -281,4 +287,389 @@
 
     <!-- NOTIFICACIÓN TOAST -->
     <div id="toast" class="fixed bottom-5 right-5 bg-chicDark text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-semibold translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-c
+        <i class="fa-solid fa-circle-check text-roseGold-400 text-base"></i>
+        <span id="toast-msg">Mensaje</span>
+    </div>
+
+    <script>
+        const DEFAULT_MSG_TEMPLATE = "Hola {nombre}, un gusto saludarte. Te escribo de ELLE Real Estate respecto a tu interés en {propiedad} en la zona de {zona}. ¿Cómo te queda hablar unos minutos?";
+
+        function getDeviceId() {
+            let id = localStorage.getItem('crm_device_id');
+            if (!id) {
+                id = 'ELLE-' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('crm_device_id', id);
+            }
+            return id;
+        }
+
+        function verifyKey(deviceId, key) {
+            const parts = key.split('-');
+            if (parts.length !== 3) return 0;
+            const [keyId, monthsStr, hash] = parts;
+            if (keyId !== deviceId.replace('ELLE-', '')) return 0;
+            const months = parseInt(monthsStr.replace('M', ''));
+            const expectedHash = (parseInt(keyId) * 7 + months * 13).toString(16).toUpperCase();
+            return (hash === expectedHash) ? months : 0;
+        }
+
+        function checkLicenseStatus() {
+            const deviceId = getDeviceId();
+            document.getElementById('device-id-display').textContent = deviceId;
+            let trialStart = localStorage.getItem('crm_trial_start');
+            let licenseExpiry = localStorage.getItem('crm_license_expiry');
+            const now = new Date().getTime();
+
+            if (!trialStart && !licenseExpiry) {
+                trialStart = now;
+                localStorage.setItem('crm_trial_start', trialStart);
+            }
+
+            let validUntil = licenseExpiry ? parseInt(licenseExpiry) : (parseInt(trialStart) + (30 * 24 * 60 * 60 * 1000));
+            let daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
+
+            const statusText = document.getElementById('license-status-text');
+            const statusIndicator = document.getElementById('status-indicator');
+            const btnSave = document.getElementById('btn-save');
+
+            if (daysLeft > 0) {
+                statusText.innerHTML = licenseExpiry 
+                    ? `Suscripción Activa (${daysLeft} días)`
+                    : `Prueba Gratuita (${daysLeft} días restantes)`;
+                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                btnSave.disabled = false;
+                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                statusText.innerHTML = `<span class="text-rose-500">Licencia Vencida</span>`;
+                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                btnSave.disabled = true;
+                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function openLicenseModal() { document.getElementById('license-modal').classList.remove('hidden'); }
+        function closeLicenseModal() { document.getElementById('license-modal').classList.add('hidden'); }
+
+        function applyLicenseKey() {
+            const deviceId = getDeviceId();
+            const input = document.getElementById('license-key-input').value.trim().toUpperCase();
+            const monthsAdded = verifyKey(deviceId, input);
+
+            if (monthsAdded > 0) {
+                const now = new Date().getTime();
+                const currentExpiry = localStorage.getItem('crm_license_expiry');
+                let baseDate = (currentExpiry && parseInt(currentExpiry) > now) ? parseInt(currentExpiry) : now;
+                const daysToAdd = monthsAdded * 30;
+                localStorage.setItem('crm_license_expiry', baseDate + (daysToAdd * 24 * 60 * 60 * 1000));
+                closeLicenseModal();
+                checkLicenseStatus();
+                showToast(`¡Licencia de ${monthsAdded} mes(es) activada!`);
+            } else { alert("La clave no es válida para este dispositivo."); }
+        }
+
+        function getMessageTemplate() {
+            return localStorage.getItem('crm_msg_template') || DEFAULT_MSG_TEMPLATE;
+        }
+
+        function saveMessageTemplate() {
+            const val = document.getElementById('msg-template-input').value.trim();
+            if (!val) return alert("Por favor escribe una plantilla.");
+            localStorage.setItem('crm_msg_template', val);
+            showToast("Plantilla de saludo guardada ✨");
+        }
+
+        function openWhatsApp(telefono, nombre, propiedad, zona) {
+            const cleanPhone = telefono.replace(/\D/g, '');
+            let template = getMessageTemplate();
+
+            template = template.replace(/\{nombre\}/g, nombre || 'Cliente');
+            template = template.replace(/\{propiedad\}/g, propiedad || 'tu consulta');
+            template = template.replace(/\{zona\}/g, zona || 'tu interés');
+
+            const encodedMsg = encodeURIComponent(template);
+            window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+        }
+
+        function openMap(link, zona) {
+            if (link) {
+                window.open(link, '_blank');
+            } else if (zona) {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(zona)}`, '_blank');
+            } else {
+                alert("No hay ubicación ni zona registrada para este cliente.");
+            }
+        }
+
+        // PEGAR PORTAPAPELES EN 1 TOQUE
+        async function pasteClipboardToLocation() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById('linkUbicacion').value = text;
+                    showToast("¡Link pegado!");
+                } else {
+                    alert("El portapapeles está vacío.");
+                }
+            } catch (err) {
+                alert("Para pegar automáticamente, mantén presionada la casilla y selecciona Pegar.");
+            }
+        }
+
+        // --- GESTIÓN DE DATOS Y FORMULARIO ---
+        const STORAGE_KEY = 'crm_elle_clientes';
+        function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editClientId').value;
+            const nombre = document.getElementById('nombreCliente').value;
+            const telefono = document.getElementById('telefono').value;
+            const propiedad = document.getElementById('propiedadMostrada').value;
+            const fecha = document.getElementById('fechaVisita').value;
+
+            let lista = getClientes();
+
+            if (editId) {
+                lista = lista.map(c => {
+                    if (c.id == editId) {
+                        return {
+                            ...c,
+                            nombreCliente: nombre,
+                            telefono: telefono,
+                            origenLead: document.getElementById('origenLead').value,
+                            tipoInmueble: document.getElementById('tipoInmueble').value,
+                            presupuesto: document.getElementById('presupuesto').value,
+                            zonaInteres: document.getElementById('zonaInteres').value,
+                            propiedadMostrada: propiedad,
+                            linkUbicacion: document.getElementById('linkUbicacion').value,
+                            asesorMostro: document.getElementById('asesorMostro').value,
+                            asesorCaptador: document.getElementById('asesorCaptador').value,
+                            contactoCaptador: document.getElementById('contactoCaptador').value,
+                            estado: document.getElementById('estado').value,
+                            fechaVisita: fecha,
+                        };
+                    }
+                    return c;
+                });
+                showToast("Cliente actualizado ✨");
+            } else {
+                const cliente = {
+                    id: Date.now(),
+                    nombreCliente: nombre,
+                    telefono: telefono,
+                    origenLead: document.getElementById('origenLead').value,
+                    tipoInmueble: document.getElementById('tipoInmueble').value,
+                    presupuesto: document.getElementById('presupuesto').value,
+                    zonaInteres: document.getElementById('zonaInteres').value,
+                    propiedadMostrada: propiedad,
+                    linkUbicacion: document.getElementById('linkUbicacion').value,
+                    asesorMostro: document.getElementById('asesorMostro').value,
+                    asesorCaptador: document.getElementById('asesorCaptador').value,
+                    contactoCaptador: document.getElementById('contactoCaptador').value,
+                    estado: document.getElementById('estado').value,
+                    fechaVisita: fecha,
+                };
+                lista.unshift(cliente);
+                if (fecha) addToGoogleCalendar(nombre, propiedad, fecha);
+                showToast("Cliente registrado ✨");
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+            resetForm();
+            updateBadge();
+            switchTab('list');
+        }
+
+        function editCliente(id) {
+            const lista = getClientes();
+            const cliente = lista.find(c => c.id == id);
+            if (!cliente) return;
+
+            document.getElementById('editClientId').value = cliente.id;
+            document.getElementById('nombreCliente').value = cliente.nombreCliente || '';
+            document.getElementById('telefono').value = cliente.telefono || '';
+            document.getElementById('origenLead').value = cliente.origenLead || 'Instagram';
+            document.getElementById('tipoInmueble').value = cliente.tipoInmueble || 'Departamento';
+            document.getElementById('presupuesto').value = cliente.presupuesto || '';
+            document.getElementById('zonaInteres').value = cliente.zonaInteres || '';
+            document.getElementById('propiedadMostrada').value = cliente.propiedadMostrada || '';
+            document.getElementById('linkUbicacion').value = cliente.linkUbicacion || '';
+            document.getElementById('asesorMostro').value = cliente.asesorMostro || '';
+            document.getElementById('asesorCaptador').value = cliente.asesorCaptador || '';
+            document.getElementById('contactoCaptador').value = cliente.contactoCaptador || '';
+            document.getElementById('estado').value = cliente.estado || 'Consulta';
+            document.getElementById('fechaVisita').value = cliente.fechaVisita || '';
+
+            document.getElementById('form-title').textContent = 'Editar Registro';
+            document.getElementById('form-badge').textContent = 'Modificando Ficha';
+            document.getElementById('btn-save-text').textContent = 'Actualizar Cliente';
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            switchTab('form');
+        }
+
+        function resetForm() {
+            document.getElementById('crm-form').reset();
+            document.getElementById('editClientId').value = '';
+            document.getElementById('form-title').textContent = 'Datos del Registro';
+            document.getElementById('form-badge').textContent = 'Nuevo Prospecto';
+            document.getElementById('btn-save-text').textContent = 'Cargar Cliente al CRM';
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        function deleteCliente(id) {
+            if (confirm("¿Deseas eliminar este cliente de la cartera?")) {
+                let lista = getClientes();
+                lista = lista.filter(c => c.id != id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+                renderClientes();
+                updateBadge();
+                showToast("Registro eliminado");
+            }
+        }
+
+        function addToGoogleCalendar(nombre, propiedad, fechaVisita) {
+            if (!fechaVisita) return;
+            const start = new Date(fechaVisita);
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
+            const formatGCal = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+            const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
+            const details = encodeURIComponent(`Cliente: ${nombre}\nPropiedad: ${propiedad || 'General'}`);
+            const dates = `${formatGCal(start)}/${formatGCal(end)}`;
+
+            const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
+            window.open(gcalUrl, '_blank');
+        }
+
+        function renderClientes() {
+            const container = document.getElementById('clientes-container');
+            const lista = getClientes();
+            if (lista.length === 0) {
+                container.innerHTML = `<p class="text-center py-8 text-xs text-slate-400">Sin clientes en la cartera.</p>`;
+                return;
+            }
+            container.innerHTML = lista.map(c => `
+                <div class="p-4 bg-sand rounded-2xl border border-roseGold-100 space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-roseGold-500 uppercase tracking-wider">${c.tipoInmueble}</span>
+                            <h4 class="text-sm font-bold text-slate-800">${c.nombreCliente}</h4>
+                        </div>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-100 text-roseGold-600">${c.estado}</span>
+                    </div>
+
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <div><i class="fa-solid fa-location-dot text-roseGold-400 mr-1.5"></i> Zona: ${c.zonaInteres || 'No especificada'}</div>
+                        <div><i class="fa-solid fa-building text-roseGold-400 mr-1.5"></i> Propiedad: ${c.propiedadMostrada || 'General'}</div>
+                        ${c.asesorCaptador ? `<div><i class="fa-solid fa-user-tag text-roseGold-400 mr-1.5"></i> Captador: ${c.asesorCaptador} (${c.contactoCaptador || 'S/N'})</div>` : ''}
+                        ${c.fechaVisita ? `<div class="text-roseGold-600 font-semibold"><i class="fa-regular fa-calendar-check mr-1.5"></i> Visita: ${new Date(c.fechaVisita).toLocaleString()}</div>` : ''}
+                    </div>
+
+                    <div class="flex items-center gap-1.5 pt-2 border-t border-roseGold-100/60 flex-wrap">
+                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}', '${c.zonaInteres}')" class="flex-1 min-w-[90px] py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                        </button>
+                        <button onclick="openMap('${c.linkUbicacion}', '${c.zonaInteres}')" class="px-2.5 py-2 bg-white text-slate-700 hover:bg-roseGold-50 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
+                            <i class="fa-solid fa-map-location-dot text-roseGold-500"></i> Mapa
+                        </button>
+                        <button onclick="editCliente(${c.id})" class="px-2.5 py-2 bg-white text-slate-700 hover:bg-roseGold-50 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
+                            <i class="fa-solid fa-pen text-roseGold-500"></i>
+                        </button>
+                        ${c.fechaVisita ? `
+                            <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-2.5 py-2 bg-white text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar-plus text-roseGold-500"></i>
+                            </button>
+                        ` : ''}
+                        <button onclick="deleteCliente(${c.id})" class="px-2 py-2 text-rose-400 hover:text-rose-600 rounded-xl text-xs">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- BACKUP Y EXPORTACIÓN ---
+        function downloadBackupJSON() {
+            const data = localStorage.getItem(STORAGE_KEY) || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_crm_elle_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Backup descargado ✨");
+        }
+
+        function restoreBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const restoredData = JSON.parse(e.target.result);
+                    if (Array.isArray(restoredData)) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(restoredData));
+                        updateBadge();
+                        showToast("Base de datos restaurada ✨");
+                        switchTab('list');
+                    } else { alert("Formato de archivo no válido."); }
+                } catch (err) { alert("Error al leer el archivo."); }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportToCSV() {
+            const lista = getClientes();
+            if (lista.length === 0) return alert("No hay datos para exportar.");
+            const headers = ["Cliente", "Telefono", "Origen", "Tipo Inmueble", "Presupuesto", "Zona", "Propiedad", "Ubicacion Link", "Asesor Mostro", "Asesor Captador", "Contacto Captador", "Estado", "Fecha Visita"];
+            const rows = lista.map(c => [
+                `"${c.nombreCliente}"`, `"${c.telefono}"`, `"${c.origenLead}"`, `"${c.tipoInmueble}"`,
+                c.presupuesto, `"${c.zonaInteres}"`, `"${c.propiedadMostrada}"`, `"${c.linkUbicacion || ''}"`, `"${c.asesorMostro}"`,
+                `"${c.asesorCaptador}"`, `"${c.contactoCaptador}"`, `"${c.estado}"`, `"${c.fechaVisita}"`
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `clientes_elle_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
+            document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
+            document.getElementById('tab-config').classList.toggle('hidden', tab !== 'config');
+            document.getElementById('tab-backup').classList.toggle('hidden', tab !== 'backup');
+            
+            ['form', 'list', 'config', 'backup'].forEach(t => {
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (t === tab) {
+                    btn.className = "py-2.5 px-1 font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1";
+                } else {
+                    btn.className = "py-2.5 px-1 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1";
+                }
+            });
+
+            if (tab === 'list') renderClientes();
+            if (tab === 'config') {
+                document.getElementById('msg-template-input').value = getMessageTemplate();
+            }
+        }
+
+        function updateBadge() { document.getElementById('count-badge').textContent = getClientes().length; }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500);
+        }
+
+        checkLicenseStatus();
+        updateBadge();
+    </script>
+</body>
+</html>
