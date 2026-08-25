@@ -270,7 +270,7 @@
         </div>
     </section>
 
-    <!-- MODAL DE ACTIVACIÓN -->
+    <!-- MODAL DE ACTIVACIÓN CON BOTÓN DESTACADO A TU WHATSAPP -->
     <div id="license-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white max-w-sm w-full p-6 rounded-3xl border border-roseGold-100 shadow-2xl text-center space-y-4">
             <div class="w-12 h-12 bg-roseGold-50 text-roseGold-500 rounded-2xl flex items-center justify-center mx-auto text-xl">
@@ -281,7 +281,13 @@
             <div class="bg-roseGold-50 p-2.5 rounded-xl border border-roseGold-200 font-mono text-sm font-bold text-roseGold-600 select-all" id="device-id-display">
                 CARGANDO...
             </div>
-            <p class="text-[11px] text-slate-400">Envía este ID para obtener tu clave de activación.</p>
+            
+            <!-- BOTÓN A TU WHATSAPP DIRECTO -->
+            <button onclick="sendIdToAdminWhatsApp()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+                <i class="fa-brands fa-whatsapp text-lg"></i> Solicitar Clave por WhatsApp
+            </button>
+
+            <p class="text-[11px] text-slate-400 border-t border-slate-100 pt-3">Ingresá la clave de activación recibida:</p>
             <input type="text" id="license-key-input" placeholder="Ingresar clave recibida" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
             <div class="flex gap-2">
                 <button onclick="closeLicenseModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
@@ -297,6 +303,9 @@
     </div>
 
     <script>
+        // TU NÚMERO DIRECTO DE WHATSAPP CON CÓDIGO DE PAÍS
+        const ADMIN_WHATSAPP_NUMBER = "595971929866";
+
         const DEFAULT_MSG_TEMPLATE = "Hola {nombre}, un gusto saludarte. Te escribo de ELLE Real Estate respecto a tu interés en {propiedad} en la zona de {zona}. ¿Cómo te queda hablar unos minutos?";
 
         function getDeviceId() {
@@ -306,6 +315,12 @@
                 localStorage.setItem('crm_device_id', id);
             }
             return id;
+        }
+
+        function sendIdToAdminWhatsApp() {
+            const devId = getDeviceId();
+            const msg = `¡Hola Juan Angel! 👋 Les escribo desde el CRM Elle Real Estate para solicitar la habilitación de mi licencia.\n\nMi ID de dispositivo es: *${devId}* ✨\n\nQuedo a la espera de la clave de activación. ¡Muchas gracias!`;
+            window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function verifyKey(deviceId, key) {
