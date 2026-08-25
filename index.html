@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elle CRM Real Estate</title>
+
+    <!-- ÍCONO PARA LA PANTALLA DE INICIO (CELULAR) -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/isometric/512/diamond.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/isometric/512/diamond.png">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -133,7 +138,7 @@
                 <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- BLOQUE DE UBICACIÓN DESTACADO Y CON BOTÓN DE PEGAR -->
+            <!-- BLOQUE DE UBICACIÓN DESTACADO CON BOTÓN PEGAR -->
             <div class="bg-roseGold-50/70 p-3.5 rounded-2xl border border-roseGold-200/80 space-y-1.5">
                 <div class="flex justify-between items-center">
                     <label class="text-xs font-bold text-roseGold-600 flex items-center gap-1.5">
@@ -400,7 +405,6 @@
             }
         }
 
-        // PEGAR PORTAPAPELES EN 1 TOQUE
         async function pasteClipboardToLocation() {
             try {
                 const text = await navigator.clipboard.readText();
@@ -415,7 +419,6 @@
             }
         }
 
-        // --- GESTIÓN DE DATOS Y FORMULARIO ---
         const STORAGE_KEY = 'crm_elle_clientes';
         function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
@@ -589,7 +592,6 @@
             `).join('');
         }
 
-        // --- BACKUP Y EXPORTACIÓN ---
         function downloadBackupJSON() {
             const data = localStorage.getItem(STORAGE_KEY) || '[]';
             const blob = new Blob([data], { type: 'application/json' });
