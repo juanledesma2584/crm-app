@@ -43,7 +43,7 @@
         </button>
     </div>
 
-    <!-- ENCABEZADO -->
+    <!-- ENCABEZADO Y PESTAÑAS -->
     <header class="w-full max-w-2xl mb-6 bg-white p-6 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 relative overflow-hidden">
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -55,29 +55,34 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 bg-sand p-1.5 rounded-2xl border border-roseGold-100">
-            <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-user-plus"></i> Nueva Ficha
+        <div class="grid grid-cols-3 gap-1.5 bg-sand p-1.5 rounded-2xl border border-roseGold-100">
+            <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-user-plus"></i> Carga
             </button>
-            <button onclick="switchTab('list')" id="btn-tab-list" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-2">
+            <button onclick="switchTab('list')" id="btn-tab-list" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
                 <i class="fa-solid fa-address-book"></i> Clientes (<span id="count-badge">0</span>)
+            </button>
+            <button onclick="switchTab('backup')" id="btn-tab-backup" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-shield-halved"></i> Backup
             </button>
         </div>
     </header>
 
-    <!-- FORMULARIO DE REGISTRO -->
+    <!-- PESTAÑA 1: FORMULARIO COMPLETO -->
     <main id="tab-form" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos de la Atención</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos del Registro</h2>
             <span class="text-xs font-semibold text-roseGold-500 bg-roseGold-50 px-2.5 py-1 rounded-full">Nuevo Prospecto</span>
         </div>
 
         <form id="crm-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <!-- Nombre Completo -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Nombre completo del cliente *</label>
-                <input type="text" id="nombreCliente" required placeholder="Ej. Sofia Rossi" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                <input type="text" id="nombreCliente" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
+            <!-- WhatsApp y Origen -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Teléfono *</label>
@@ -88,21 +93,25 @@
                     <select id="origenLead" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                         <option value="Instagram">Instagram</option>
                         <option value="Facebook">Facebook</option>
-                        <option value="Recomendación">Recomendación</option>
+                        <option value="TikTok">TikTok</option>
                         <option value="Portal Inmobiliario">Portal Inmobiliario</option>
+                        <option value="Recomendación">Recomendación</option>
+                        <option value="Cartel / Vía Pública">Cartel / Vía Pública</option>
                     </select>
                 </div>
             </div>
 
+            <!-- Tipo e Inmueble y Presupuesto -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Inmueble</label>
                     <select id="tipoInmueble" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                         <option value="Departamento">Departamento</option>
                         <option value="Casa">Casa</option>
+                        <option value="Terreno / Lote">Terreno / Lote</option>
                         <option value="Dúplex">Dúplex</option>
                         <option value="Penthouse">Penthouse</option>
-                        <option value="Terreno">Terreno</option>
+                        <option value="Oficina / Local">Oficina / Local</option>
                     </select>
                 </div>
                 <div>
@@ -111,42 +120,109 @@
                 </div>
             </div>
 
+            <!-- Zona / Barrio de Interés -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada / Interés</label>
-                <input type="text" id="propiedadMostrada" placeholder="Ej. Edificio Park Plaza Apt 502" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Zona / Barrio de Interés</label>
+                <input type="text" id="zonaInteres" placeholder="Ej. Asunción, Villa Morra, Mburucuyá" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
+            <!-- Propiedad Mostrada -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada</label>
+                <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            </div>
+
+            <!-- Asesor Mostró y Asesor Captador -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Asesor que Mostró</label>
+                    <input type="text" id="asesorMostro" placeholder="Ej. Silvio Meza" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Asesor Captador</label>
+                    <input type="text" id="asesorCaptador" placeholder="Ej. Nombre del captador" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
+            </div>
+
+            <!-- Contacto Captador y Estado -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contacto Asesor Captador</label>
+                    <input type="tel" id="contactoCaptador" placeholder="Ej. 0981123456" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Estado</label>
                     <select id="estado" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
-                        <option value="Primer Contacto">Primer Contacto</option>
-                        <option value="Visita Programada">Visita Programada</option>
-                        <option value="En Negociación">En Negociación</option>
+                        <option value="Consulta">Consulta</option>
+                        <option value="Visita Agendada">Visita Agendada</option>
+                        <option value="Visita Realizada">Visita Realizada</option>
+                        <option value="Negociación">Negociación</option>
                         <option value="Cierre Ganado">Cierre Ganado ✨</option>
+                        <option value="Desestimado">Desestimado</option>
                     </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora de Visita</label>
-                    <input type="datetime-local" id="fechaVisita" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                 </div>
             </div>
 
+            <!-- Fecha y Hora de Visita -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora de la Visita</label>
+                <input type="datetime-local" id="fechaVisita" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            </div>
+
             <button type="submit" id="btn-save" class="w-full py-4 bg-gradient-to-r from-roseGold-500 to-roseGold-600 hover:from-roseGold-600 hover:to-roseGold-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-roseGold-500/30 transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-sparkles"></i> Registrar Cliente
+                <i class="fa-solid fa-sparkles"></i> Cargar Cliente al CRM
             </button>
         </form>
     </main>
 
-    <!-- LISTA DE CLIENTES REGISTRADOS -->
+    <!-- PESTAÑA 2: LISTA DE CLIENTES -->
     <section id="tab-list" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartera Activa</h2>
             <button onclick="exportToCSV()" class="text-xs font-bold text-roseGold-600 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
-                <i class="fa-solid fa-download mr-1"></i> Excel
+                <i class="fa-solid fa-file-excel mr-1"></i> Excel
             </button>
         </div>
         <div id="clientes-container" class="space-y-3"></div>
+    </section>
+
+    <!-- PESTAÑA 3: CENTRO DE BACKUP / RESTAURACIÓN -->
+    <section id="tab-backup" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-6">
+        <div class="pb-3 border-b border-roseGold-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Copias de Seguridad</h2>
+            <p class="text-xs text-slate-500 mt-1">Resguardá tu base de datos o transferila a un teléfono nuevo.</p>
+        </div>
+
+        <div class="bg-roseGold-50/50 p-5 rounded-2xl border border-roseGold-100 space-y-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-roseGold-500 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-download"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Descargar Respaldo</h3>
+                    <p class="text-xs text-slate-500">Guarda un archivo de copia de seguridad (.JSON) en tu celular.</p>
+                </div>
+            </div>
+            <button onclick="downloadBackupJSON()" class="w-full py-3 bg-roseGold-500 hover:bg-roseGold-600 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                Exportar Copia de Seguridad
+            </button>
+        </div>
+
+        <div class="bg-sand p-5 rounded-2xl border border-roseGold-100 space-y-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-chicDark text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-upload"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Restaurar Datos</h3>
+                    <p class="text-xs text-slate-500">Subí un archivo de respaldo previo para recuperar tus datos.</p>
+                </div>
+            </div>
+            <input type="file" id="backup-file-input" accept=".json" onchange="restoreBackupJSON(event)" class="hidden">
+            <button onclick="document.getElementById('backup-file-input').click()" class="w-full py-3 bg-chicDark hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                Seleccionar Archivo .JSON
+            </button>
+        </div>
     </section>
 
     <!-- MODAL DE ACTIVACIÓN -->
@@ -157,15 +233,11 @@
             </div>
             <h3 class="text-base font-bold text-slate-800">Activar Licencia CRM</h3>
             <p class="text-xs text-slate-500">Tu ID de Dispositivo único es:</p>
-            
             <div class="bg-roseGold-50 p-2.5 rounded-xl border border-roseGold-200 font-mono text-sm font-bold text-roseGold-600 select-all" id="device-id-display">
                 CARGANDO...
             </div>
-
             <p class="text-[11px] text-slate-400">Envía este ID para obtener tu clave de activación.</p>
-
             <input type="text" id="license-key-input" placeholder="Ingresar clave recibida" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
-            
             <div class="flex gap-2">
                 <button onclick="closeLicenseModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
                 <button onclick="applyLicenseKey()" class="flex-1 py-3 bg-roseGold-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-roseGold-500/20">Activar</button>
@@ -180,7 +252,6 @@
     </div>
 
     <script>
-        // --- MOTOR DE GENERACIÓN DE ID Y VERIFICACIÓN ---
         function getDeviceId() {
             let id = localStorage.getItem('crm_device_id');
             if (!id) {
@@ -190,24 +261,19 @@
             return id;
         }
 
-        // Algoritmo de verificación matemática
         function verifyKey(deviceId, key) {
             const parts = key.split('-');
             if (parts.length !== 3) return 0;
-
             const [keyId, monthsStr, hash] = parts;
             if (keyId !== deviceId.replace('ELLE-', '')) return 0;
-
             const months = parseInt(monthsStr.replace('M', ''));
             const expectedHash = (parseInt(keyId) * 7 + months * 13).toString(16).toUpperCase();
-
             return (hash === expectedHash) ? months : 0;
         }
 
         function checkLicenseStatus() {
             const deviceId = getDeviceId();
             document.getElementById('device-id-display').textContent = deviceId;
-
             let trialStart = localStorage.getItem('crm_trial_start');
             let licenseExpiry = localStorage.getItem('crm_license_expiry');
             const now = new Date().getTime();
@@ -245,26 +311,21 @@
         function applyLicenseKey() {
             const deviceId = getDeviceId();
             const input = document.getElementById('license-key-input').value.trim().toUpperCase();
-            
             const monthsAdded = verifyKey(deviceId, input);
 
             if (monthsAdded > 0) {
                 const now = new Date().getTime();
                 const currentExpiry = localStorage.getItem('crm_license_expiry');
                 let baseDate = (currentExpiry && parseInt(currentExpiry) > now) ? parseInt(currentExpiry) : now;
-                
                 const daysToAdd = monthsAdded * 30;
                 localStorage.setItem('crm_license_expiry', baseDate + (daysToAdd * 24 * 60 * 60 * 1000));
-                
                 closeLicenseModal();
                 checkLicenseStatus();
                 showToast(`¡Licencia de ${monthsAdded} mes(es) activada!`);
-            } else {
-                alert("La clave ingresada no es válida para este dispositivo.");
-            }
+            } else { alert("La clave no es válida para este dispositivo."); }
         }
 
-        // --- MANEJO DE CLIENTES ---
+        // --- GESTIÓN DE DATOS Y FORMULARIO ---
         const STORAGE_KEY = 'crm_elle_clientes';
         function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
@@ -282,7 +343,11 @@
                 origenLead: document.getElementById('origenLead').value,
                 tipoInmueble: document.getElementById('tipoInmueble').value,
                 presupuesto: document.getElementById('presupuesto').value,
+                zonaInteres: document.getElementById('zonaInteres').value,
                 propiedadMostrada: propiedad,
+                asesorMostro: document.getElementById('asesorMostro').value,
+                asesorCaptador: document.getElementById('asesorCaptador').value,
+                contactoCaptador: document.getElementById('contactoCaptador').value,
                 estado: document.getElementById('estado').value,
                 fechaVisita: fecha,
             };
@@ -291,9 +356,7 @@
             lista.unshift(cliente);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
 
-            if (fecha) {
-                addToGoogleCalendar(nombre, propiedad, fecha);
-            }
+            if (fecha) addToGoogleCalendar(nombre, propiedad, fecha);
 
             document.getElementById('crm-form').reset();
             updateBadge();
@@ -302,7 +365,7 @@
 
         function openWhatsApp(telefono, nombre, propiedad) {
             const cleanPhone = telefono.replace(/\D/g, '');
-            const mensaje = encodeURIComponent(`Hola ${nombre}, te escribo respecto al inmueble ${propiedad || 'tu consulta'}.`);
+            const mensaje = encodeURIComponent(`Hola ${nombre}, te escribo respecto a ${propiedad || 'tu consulta inmobiliaria'}.`);
             window.open(`https://wa.me/${cleanPhone}?text=${mensaje}`, '_blank');
         }
 
@@ -313,7 +376,7 @@
             const formatGCal = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
 
             const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
-            const details = encodeURIComponent(`Cliente: ${nombre}\nPropiedad: ${propiedad || 'No especificada'}`);
+            const details = encodeURIComponent(`Cliente: ${nombre}\nPropiedad: ${propiedad || 'General'}`);
             const dates = `${formatGCal(start)}/${formatGCal(end)}`;
 
             const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
@@ -338,7 +401,9 @@
                     </div>
 
                     <div class="text-xs text-slate-500 space-y-1">
-                        <div><i class="fa-solid fa-building text-roseGold-400 mr-1.5"></i> Interés: ${c.propiedadMostrada || 'General'}</div>
+                        <div><i class="fa-solid fa-location-dot text-roseGold-400 mr-1.5"></i> Zona: ${c.zonaInteres || 'No especificada'}</div>
+                        <div><i class="fa-solid fa-building text-roseGold-400 mr-1.5"></i> Propiedad: ${c.propiedadMostrada || 'General'}</div>
+                        ${c.asesorCaptador ? `<div><i class="fa-solid fa-user-tag text-roseGold-400 mr-1.5"></i> Captador: ${c.asesorCaptador} (${c.contactoCaptador || 'S/N'})</div>` : ''}
                         ${c.fechaVisita ? `<div class="text-roseGold-600 font-semibold"><i class="fa-regular fa-calendar-check mr-1.5"></i> Visita: ${new Date(c.fechaVisita).toLocaleString()}</div>` : ''}
                     </div>
 
@@ -356,9 +421,71 @@
             `).join('');
         }
 
+        // --- SISTEMA DE BACKUP Y RESTAURACIÓN ---
+        function downloadBackupJSON() {
+            const data = localStorage.getItem(STORAGE_KEY) || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_crm_elle_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Backup descargado ✨");
+        }
+
+        function restoreBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const restoredData = JSON.parse(e.target.result);
+                    if (Array.isArray(restoredData)) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(restoredData));
+                        updateBadge();
+                        showToast("Base de datos restaurada ✨");
+                        switchTab('list');
+                    } else { alert("Formato de archivo de respaldo no válido."); }
+                } catch (err) { alert("Error al leer el archivo de copia de seguridad."); }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportToCSV() {
+            const lista = getClientes();
+            if (lista.length === 0) return alert("No hay datos para exportar.");
+            const headers = ["Cliente", "Telefono", "Origen", "Tipo Inmueble", "Presupuesto", "Zona", "Propiedad", "Asesor Mostro", "Asesor Captador", "Contacto Captador", "Estado", "Fecha Visita"];
+            const rows = lista.map(c => [
+                `"${c.nombreCliente}"`, `"${c.telefono}"`, `"${c.origenLead}"`, `"${c.tipoInmueble}"`,
+                c.presupuesto, `"${c.zonaInteres}"`, `"${c.propiedadMostrada}"`, `"${c.asesorMostro}"`,
+                `"${c.asesorCaptador}"`, `"${c.contactoCaptador}"`, `"${c.estado}"`, `"${c.fechaVisita}"`
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `clientes_elle_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function switchTab(tab) {
             document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
             document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
+            document.getElementById('tab-backup').classList.toggle('hidden', tab !== 'backup');
+            
+            // Actualizar botones activos
+            ['form', 'list', 'backup'].forEach(t => {
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (t === tab) {
+                    btn.className = "py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1";
+                } else {
+                    btn.className = "py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1";
+                }
+            });
+
             if (tab === 'list') renderClientes();
         }
 
