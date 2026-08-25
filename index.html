@@ -3,149 +3,331 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Control Edificio & ESP32</title>
+    <title>Elle CRM Real Estate</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        roseGold: {
+                            50: '#fff9f7',
+                            100: '#fdeee9',
+                            200: '#fbdcd3',
+                            400: '#f2a690',
+                            500: '#e57a5c',
+                            600: '#d15a3a',
+                        },
+                        sand: '#faf8f5',
+                        chicDark: '#1c1917',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; padding: 15px; background: #f0f4f8; color: #102a43; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h1, h2, h3 { color: #0b69a3; margin-top: 0; }
-        select, input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #bcccdc; font-size: 1rem; }
-        button { background: #0b69a3; color: white; font-weight: bold; border: none; cursor: pointer; }
-        button:active { transform: scale(0.98); }
-        .btn-esp32 { background: #27ab83; font-size: 1.2rem; padding: 18px; }
-        .btn-backup { background: #e12d39; }
-        .role-badge { display: inline-block; padding: 4px 12px; background: #e0f2fe; color: #0369a1; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #d9e2ec; padding: 8px; text-align: left; font-size: 0.9rem; }
-        th { background: #f0f4f8; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-sand text-slate-800 min-h-screen flex flex-col items-center p-3 sm:p-6 pb-20">
 
-    <div class="card">
-        <h1>🛠️ Edificio Test & ESP32</h1>
-        <label><b>Seleccionar Rol:</b></label>
-        <select id="roleSelect" onchange="cambiarRol()">
-            <option value="inquilino">Inquilino (Apertura de Puerta)</option>
-            <option value="porteria">Portería (Visitas)</option>
-            <option value="admin">Administración</option>
-            <option value="superadmin">SuperAdmin (Juan Ángel - Backup)</option>
-        </select>
-        <div style="margin-top:10px;">Rol activo: <span class="role-badge" id="roleBadge">Inquilino</span></div>
+    <!-- BARRA SUPERIOR DE LICENCIA Y PERFIL -->
+    <div id="license-bar" class="w-full max-w-2xl mb-4 px-4 py-3 bg-white/90 backdrop-blur-md rounded-2xl border border-roseGold-100 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span id="license-status-text">Cargando estado...</span>
+        </div>
+        <button onclick="openLicenseModal()" class="text-xs text-roseGold-600 font-bold hover:underline flex items-center gap-1.5 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
+            <i class="fa-solid fa-key"></i> Licencia
+        </button>
     </div>
 
-    <!-- SECTOR INQUILINO / ESP32 -->
-    <div id="secInquilino" class="card">
-        <h2>🚪 Control de Acceso (ESP32)</h2>
-        <label>IP del ESP32:</label>
-        <input type="text" id="ipEsp32" value="192.168.1.100">
-        <button class="btn-esp32" onclick="abrirPuerta()">🔓 ABRIR PORTÓN / PUERTA</button>
+    <!-- ENCABEZADO CHIC / PANTALLA DE INICIO -->
+    <header class="w-full max-w-2xl mb-6 bg-white p-6 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-roseGold-100/50 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <span class="text-[10px] font-bold tracking-widest uppercase text-roseGold-500">Exclusivo para Agentes</span>
+                <h1 class="text-2xl font-extrabold text-chicDark">ELLE <span class="font-normal text-roseGold-500">Real Estate</span></h1>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-roseGold-400 to-roseGold-600 text-white flex items-center justify-center text-xl shadow-lg shadow-roseGold-500/30">
+                <i class="fa-solid fa-gem"></i>
+            </div>
+        </div>
+
+        <!-- Botones de Navegación Pestañas -->
+        <div class="grid grid-cols-2 gap-2 bg-sand p-1.5 rounded-2xl border border-roseGold-100">
+            <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Nueva Ficha
+            </button>
+            <button onclick="switchTab('list')" id="btn-tab-list" class="py-2.5 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-address-book"></i> Clientes (<span id="count-badge">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <!-- FORMULARIO DE REGISTRO DE CLIENTE -->
+    <main id="tab-form" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 space-y-4">
+        <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos de la Atención</h2>
+            <span class="text-xs font-semibold text-roseGold-500 bg-roseGold-50 px-2.5 py-1 rounded-full">Nuevo Prospecto</span>
+        </div>
+
+        <form id="crm-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nombre completo del cliente *</label>
+                <input type="text" id="nombreCliente" required placeholder="Ej. Sofia Rossi" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Teléfono *</label>
+                    <input type="tel" id="telefono" required placeholder="Ej. 0981123456" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Origen del Lead</label>
+                    <select id="origenLead" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                        <option value="Instagram">Instagram</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Recomendación">Recomendación</option>
+                        <option value="Portal Inmobiliario">Portal Inmobiliario</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Inmueble</label>
+                    <select id="tipoInmueble" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                        <option value="Departamento">Departamento</option>
+                        <option value="Casa">Casa</option>
+                        <option value="Dúplex">Dúplex</option>
+                        <option value="Penthouse">Penthouse</option>
+                        <option value="Terreno">Terreno</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Presupuesto (USD)</label>
+                    <input type="number" id="presupuesto" placeholder="Ej. 120000" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada / Interés</label>
+                <input type="text" id="propiedadMostrada" placeholder="Ej. Edificio Park Plaza Apt 502" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Estado</label>
+                    <select id="estado" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                        <option value="Primer Contacto">Primer Contacto</option>
+                        <option value="Visita Programada">Visita Programada</option>
+                        <option value="En Negociación">En Negociación</option>
+                        <option value="Cierre / Ganado">Cierre Ganado ✨</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora de Visita</label>
+                    <input type="datetime-local" id="fechaVisita" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-save" class="w-full py-4 bg-gradient-to-r from-roseGold-500 to-roseGold-600 hover:from-roseGold-600 hover:to-roseGold-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-roseGold-500/30 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sparkles"></i> Registrar Cliente
+            </button>
+        </form>
+    </main>
+
+    <!-- LISTA DE CLIENTES REGISTRADOS -->
+    <section id="tab-list" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-4">
+        <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartera Activa</h2>
+            <button onclick="exportToCSV()" class="text-xs font-bold text-roseGold-600 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
+                <i class="fa-solid fa-download mr-1"></i> Excel
+            </button>
+        </div>
+        <div id="clientes-container" class="space-y-3"></div>
+    </section>
+
+    <!-- MODAL DE ACTIVACIÓN -->
+    <div id="license-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white max-w-sm w-full p-6 rounded-3xl border border-roseGold-100 shadow-2xl text-center space-y-4">
+            <div class="w-12 h-12 bg-roseGold-50 text-roseGold-500 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Activar Licencia CRM</h3>
+            <p class="text-xs text-slate-500">Ingresá tu código de activación habilitado para extender el servicio.</p>
+            <input type="text" id="license-key-input" placeholder="ELLE-1MES" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
+            <div class="flex gap-2">
+                <button onclick="closeLicenseModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
+                <button onclick="applyLicenseKey()" class="flex-1 py-3 bg-roseGold-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-roseGold-500/20">Activar</button>
+            </div>
+        </div>
     </div>
 
-    <!-- SECTOR PORTERÍA -->
-    <div id="secPorteria" class="card" style="display:none;">
-        <h2>📝 Registro de Visitas (Portería)</h2>
-        <input type="text" id="visNombre" placeholder="Nombre de la Visita">
-        <input type="text" id="visCi" placeholder="Cédula de Identidad">
-        <input type="text" id="visDepto" placeholder="Depto Destino (Ej: 402)">
-        <button onclick="registrarVisita()">Registrar Ingreso</button>
-
-        <h3>Historial de Visitas</h3>
-        <table>
-            <thead>
-                <tr><th>Hora</th><th>Visita</th><th>CI</th><th>Depto</th></tr>
-            </thead>
-            <tbody id="tablaVisitas"></tbody>
-        </table>
-    </div>
-
-    <!-- SECTOR SUPERADMIN / BACKUP -->
-    <div id="secSuperAdmin" class="card" style="display:none;">
-        <h2>🔐 Panel Maestro SuperAdmin</h2>
-        <p>Descargá o restaurá copias de seguridad en formato JSON de la base de datos de prueba.</p>
-        <button class="btn-backup" onclick="exportarBackup()">📥 Descargar Backup JSON</button>
-        <br><br>
-        <label><b>Restaurar Backup:</b></label>
-        <input type="file" id="fileInput" accept=".json" onchange="importarBackup(event)">
+    <!-- NOTIFICACIÓN TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-chicDark text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-semibold translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
+        <i class="fa-solid fa-circle-check text-roseGold-400 text-base"></i>
+        <span id="toast-msg">Mensaje</span>
     </div>
 
     <script>
-        let rolActual = "inquilino";
-        const PASS_SUPER = "juan2026";
-        let visitas = JSON.parse(localStorage.getItem('test_visitas')) || [];
+        const KEYS_VALIDAS = { 'ELLE-1MES': 30, 'ELLE-3MESES': 90, 'ELLE-6MESES': 180, 'VIP': 365 };
 
-        function cambiarRol() {
-            let sel = document.getElementById('roleSelect').value;
-            if (sel === 'superadmin') {
-                let p = prompt("Ingresá la contraseña de SuperAdmin:");
-                if (p !== PASS_SUPER) {
-                    alert("Contraseña incorrecta");
-                    document.getElementById('roleSelect').value = rolActual;
-                    return;
-                }
+        function checkLicenseStatus() {
+            let trialStart = localStorage.getItem('crm_trial_start');
+            let licenseExpiry = localStorage.getItem('crm_license_expiry');
+            const now = new Date().getTime();
+
+            if (!trialStart && !licenseExpiry) {
+                trialStart = now;
+                localStorage.setItem('crm_trial_start', trialStart);
             }
-            rolActual = sel;
-            document.getElementById('roleBadge').innerText = sel.toUpperCase();
-            
-            document.getElementById('secInquilino').style.display = (sel === 'inquilino' || sel === 'superadmin') ? 'block' : 'none';
-            document.getElementById('secPorteria').style.display = (sel === 'porteria' || sel === 'admin' || sel === 'superadmin') ? 'block' : 'none';
-            document.getElementById('secSuperAdmin').style.display = (sel === 'superadmin') ? 'block' : 'none';
+
+            let validUntil = licenseExpiry ? parseInt(licenseExpiry) : (parseInt(trialStart) + (30 * 24 * 60 * 60 * 1000));
+            let daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
+
+            const statusText = document.getElementById('license-status-text');
+            const btnSave = document.getElementById('btn-save');
+
+            if (daysLeft > 0) {
+                statusText.innerHTML = licenseExpiry 
+                    ? `Suscripción Activa (${daysLeft} días)`
+                    : `Prueba Gratuita (${daysLeft} días restantes)`;
+                btnSave.disabled = false;
+                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                statusText.innerHTML = `<span class="text-rose-500">Licencia Vencida</span>`;
+                btnSave.disabled = true;
+                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
+            }
         }
 
-        function abrirPuerta() {
-            let ip = document.getElementById('ipEsp32').value;
-            alert("Enviando señal de apertura a: http://" + ip + "/abrir");
-            fetch("http://" + ip + "/abrir")
-                .then(() => alert("¡Comando enviado con éxito!"))
-                .catch(() => alert("Simulación: Comando de apertura enviado al ESP32."));
+        function openLicenseModal() { document.getElementById('license-modal').classList.remove('hidden'); }
+        function closeLicenseModal() { document.getElementById('license-modal').classList.add('hidden'); }
+
+        function applyLicenseKey() {
+            const input = document.getElementById('license-key-input').value.trim().toUpperCase();
+            if (KEYS_VALIDAS[input]) {
+                const daysToAdd = KEYS_VALIDAS[input];
+                const now = new Date().getTime();
+                const currentExpiry = localStorage.getItem('crm_license_expiry');
+                let baseDate = (currentExpiry && parseInt(currentExpiry) > now) ? parseInt(currentExpiry) : now;
+                localStorage.setItem('crm_license_expiry', baseDate + (daysToAdd * 24 * 60 * 60 * 1000));
+                closeLicenseModal();
+                checkLicenseStatus();
+                showToast("¡Licencia activada!");
+            } else { alert("Clave no válida."); }
         }
 
-        function registrarVisita() {
-            let nom = document.getElementById('visNombre').value;
-            let ci = document.getElementById('visCi').value;
-            let dep = document.getElementById('visDepto').value;
-            if(!nom || !dep) { alert("Completá el nombre y el departamento"); return; }
+        const STORAGE_KEY = 'crm_elle_clientes';
+        function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
-            let nueva = { hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), nom, ci, dep };
-            visitas.unshift(nueva);
-            localStorage.setItem('test_visitas', JSON.stringify(visitas));
-            renderVisitas();
-            document.getElementById('visNombre').value = '';
-            document.getElementById('visCi').value = '';
-            document.getElementById('visDepto').value = '';
-        }
-
-        function renderVisitas() {
-            let html = '';
-            visitas.forEach(v => {
-                html += `<tr><td>${v.hora}</td><td>${v.nom}</td><td>${v.ci}</td><td>${v.dep}</td></tr>`;
-            });
-            document.getElementById('tablaVisitas').innerHTML = html;
-        }
-        renderVisitas();
-
-        function exportarBackup() {
-            let data = JSON.stringify({ visitas, fecha: new Date() });
-            let blob = new Blob([data], { type: 'application/json' });
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'Backup_Test_Edificio.json';
-            a.click();
-        }
-
-        function importarBackup(e) {
-            let reader = new FileReader();
-            reader.onload = function(event) {
-                let parsed = JSON.parse(event.target.result);
-                if(parsed.visitas) {
-                    visitas = parsed.visitas;
-                    localStorage.setItem('test_visitas', JSON.stringify(visitas));
-                    renderVisitas();
-                    alert("¡Backup de prueba restaurado!");
-                }
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const cliente = {
+                id: Date.now(),
+                nombreCliente: document.getElementById('nombreCliente').value,
+                telefono: document.getElementById('telefono').value,
+                origenLead: document.getElementById('origenLead').value,
+                tipoInmueble: document.getElementById('tipoInmueble').value,
+                presupuesto: document.getElementById('presupuesto').value,
+                propiedadMostrada: document.getElementById('propiedadMostrada').value,
+                estado: document.getElementById('estado').value,
+                fechaVisita: document.getElementById('fechaVisita').value,
             };
-            reader.readAsText(e.target.files[0]);
+
+            const lista = getClientes();
+            lista.unshift(cliente);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+
+            document.getElementById('crm-form').reset();
+            updateBadge();
+            showToast("Cliente registrado ✨");
         }
+
+        // ABRIR CHAT EN WHATSAPP
+        function openWhatsApp(telefono, nombre, propiedad) {
+            const cleanPhone = telefono.replace(/\D/g, '');
+            // Espacio listo para incorporar la plantilla de mensaje personalizada
+            const mensaje = encodeURIComponent(`Hola ${nombre}, un gusto saludarte. Te contacto desde ELLE Real Estate respecto a ${propiedad || 'tu consulta sobre inmuebles'}.`);
+            window.open(`https://wa.me/${cleanPhone}?text=${mensaje}`, '_blank');
+        }
+
+        // AGENDAR EN GOOGLE CALENDAR
+        function addToGoogleCalendar(nombre, propiedad, fechaVisita) {
+            if (!fechaVisita) return alert("No hay fecha de visita asignada para este cliente.");
+            
+            const start = new Date(fechaVisita);
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hora de duración
+
+            const formatGCalDate = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+            const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
+            const details = encodeURIComponent(`Visita agendada para el inmueble: ${propiedad || 'Por definir'}.`);
+            const dates = `${formatGCalDate(start)}/${formatGCalDate(end)}`;
+
+            const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
+            window.open(gcalUrl, '_blank');
+        }
+
+        function renderClientes() {
+            const container = document.getElementById('clientes-container');
+            const lista = getClientes();
+            if (lista.length === 0) {
+                container.innerHTML = `<p class="text-center py-8 text-xs text-slate-400">Sin clientes en la cartera.</p>`;
+                return;
+            }
+            container.innerHTML = lista.map(c => `
+                <div class="p-4 bg-sand rounded-2xl border border-roseGold-100 space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-roseGold-500 uppercase tracking-wider">${c.tipoInmueble}</span>
+                            <h4 class="text-sm font-bold text-slate-800">${c.nombreCliente}</h4>
+                        </div>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-100 text-roseGold-600">${c.estado}</span>
+                    </div>
+
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <div><i class="fa-solid fa-building text-roseGold-400 mr-1.5"></i> Interés: ${c.propiedadMostrada || 'General'}</div>
+                        ${c.fechaVisita ? `<div class="text-roseGold-600 font-semibold"><i class="fa-regular fa-calendar-check mr-1.5"></i> Visita: ${new Date(c.fechaVisita).toLocaleString()}</div>` : ''}
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-2 border-t border-roseGold-100/60">
+                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                        </button>
+                        ${c.fechaVisita ? `
+                            <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-3 py-2 bg-white hover:bg-roseGold-50 text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1 shadow-sm">
+                                <i class="fa-regular fa-calendar-plus text-roseGold-500"></i> Agendar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
+            document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
+            if (tab === 'list') renderClientes();
+        }
+
+        function updateBadge() { document.getElementById('count-badge').textContent = getClientes().length; }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500);
+        }
+
+        checkLicenseStatus();
+        updateBadge();
     </script>
 </body>
 </html>
