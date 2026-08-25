@@ -28,16 +28,14 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
 </head>
 <body class="bg-sand text-slate-800 min-h-screen flex flex-col items-center p-3 sm:p-6 pb-20">
 
-    <!-- BARRA SUPERIOR DE LICENCIA Y PERFIL -->
+    <!-- BARRA SUPERIOR DE LICENCIA -->
     <div id="license-bar" class="w-full max-w-2xl mb-4 px-4 py-3 bg-white/90 backdrop-blur-md rounded-2xl border border-roseGold-100 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <div id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
             <span id="license-status-text">Cargando estado...</span>
         </div>
         <button onclick="openLicenseModal()" class="text-xs text-roseGold-600 font-bold hover:underline flex items-center gap-1.5 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
@@ -45,10 +43,8 @@
         </button>
     </div>
 
-    <!-- ENCABEZADO CHIC / PANTALLA DE INICIO -->
+    <!-- ENCABEZADO -->
     <header class="w-full max-w-2xl mb-6 bg-white p-6 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 relative overflow-hidden">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-roseGold-100/50 rounded-full blur-2xl pointer-events-none"></div>
-        
         <div class="flex items-center justify-between mb-4">
             <div>
                 <span class="text-[10px] font-bold tracking-widest uppercase text-roseGold-500">Exclusivo para Agentes</span>
@@ -59,7 +55,6 @@
             </div>
         </div>
 
-        <!-- Botones de Navegación Pestañas -->
         <div class="grid grid-cols-2 gap-2 bg-sand p-1.5 rounded-2xl border border-roseGold-100">
             <button onclick="switchTab('form')" id="btn-tab-form" class="py-2.5 text-xs font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-2">
                 <i class="fa-solid fa-user-plus"></i> Nueva Ficha
@@ -70,7 +65,7 @@
         </div>
     </header>
 
-    <!-- FORMULARIO DE REGISTRO DE CLIENTE -->
+    <!-- FORMULARIO DE REGISTRO -->
     <main id="tab-form" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Datos de la Atención</h2>
@@ -128,7 +123,7 @@
                         <option value="Primer Contacto">Primer Contacto</option>
                         <option value="Visita Programada">Visita Programada</option>
                         <option value="En Negociación">En Negociación</option>
-                        <option value="Cierre / Ganado">Cierre Ganado ✨</option>
+                        <option value="Cierre Ganado">Cierre Ganado ✨</option>
                     </select>
                 </div>
                 <div>
@@ -161,8 +156,16 @@
                 <i class="fa-solid fa-key"></i>
             </div>
             <h3 class="text-base font-bold text-slate-800">Activar Licencia CRM</h3>
-            <p class="text-xs text-slate-500">Ingresá tu código de activación habilitado para extender el servicio.</p>
-            <input type="text" id="license-key-input" placeholder="ELLE-1MES" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
+            <p class="text-xs text-slate-500">Tu ID de Dispositivo único es:</p>
+            
+            <div class="bg-roseGold-50 p-2.5 rounded-xl border border-roseGold-200 font-mono text-sm font-bold text-roseGold-600 select-all" id="device-id-display">
+                CARGANDO...
+            </div>
+
+            <p class="text-[11px] text-slate-400">Envía este ID para obtener tu clave de activación.</p>
+
+            <input type="text" id="license-key-input" placeholder="Ingresar clave recibida" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
+            
             <div class="flex gap-2">
                 <button onclick="closeLicenseModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
                 <button onclick="applyLicenseKey()" class="flex-1 py-3 bg-roseGold-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-roseGold-500/20">Activar</button>
@@ -177,9 +180,34 @@
     </div>
 
     <script>
-        const KEYS_VALIDAS = { 'ELLE-1MES': 30, 'ELLE-3MESES': 90, 'ELLE-6MESES': 180, 'VIP': 365 };
+        // --- MOTOR DE GENERACIÓN DE ID Y VERIFICACIÓN ---
+        function getDeviceId() {
+            let id = localStorage.getItem('crm_device_id');
+            if (!id) {
+                id = 'ELLE-' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('crm_device_id', id);
+            }
+            return id;
+        }
+
+        // Algoritmo de verificación matemática
+        function verifyKey(deviceId, key) {
+            const parts = key.split('-');
+            if (parts.length !== 3) return 0;
+
+            const [keyId, monthsStr, hash] = parts;
+            if (keyId !== deviceId.replace('ELLE-', '')) return 0;
+
+            const months = parseInt(monthsStr.replace('M', ''));
+            const expectedHash = (parseInt(keyId) * 7 + months * 13).toString(16).toUpperCase();
+
+            return (hash === expectedHash) ? months : 0;
+        }
 
         function checkLicenseStatus() {
+            const deviceId = getDeviceId();
+            document.getElementById('device-id-display').textContent = deviceId;
+
             let trialStart = localStorage.getItem('crm_trial_start');
             let licenseExpiry = localStorage.getItem('crm_license_expiry');
             const now = new Date().getTime();
@@ -193,16 +221,19 @@
             let daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
 
             const statusText = document.getElementById('license-status-text');
+            const statusIndicator = document.getElementById('status-indicator');
             const btnSave = document.getElementById('btn-save');
 
             if (daysLeft > 0) {
                 statusText.innerHTML = licenseExpiry 
                     ? `Suscripción Activa (${daysLeft} días)`
                     : `Prueba Gratuita (${daysLeft} días restantes)`;
+                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
                 btnSave.disabled = false;
                 btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
                 statusText.innerHTML = `<span class="text-rose-500">Licencia Vencida</span>`;
+                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
                 btnSave.disabled = true;
                 btnSave.classList.add('opacity-50', 'cursor-not-allowed');
             }
@@ -212,67 +243,80 @@
         function closeLicenseModal() { document.getElementById('license-modal').classList.add('hidden'); }
 
         function applyLicenseKey() {
+            const deviceId = getDeviceId();
             const input = document.getElementById('license-key-input').value.trim().toUpperCase();
-            if (KEYS_VALIDAS[input]) {
-                const daysToAdd = KEYS_VALIDAS[input];
+            
+            const monthsAdded = verifyKey(deviceId, input);
+
+            if (monthsAdded > 0) {
                 const now = new Date().getTime();
                 const currentExpiry = localStorage.getItem('crm_license_expiry');
                 let baseDate = (currentExpiry && parseInt(currentExpiry) > now) ? parseInt(currentExpiry) : now;
+                
+                const daysToAdd = monthsAdded * 30;
                 localStorage.setItem('crm_license_expiry', baseDate + (daysToAdd * 24 * 60 * 60 * 1000));
+                
                 closeLicenseModal();
                 checkLicenseStatus();
-                showToast("¡Licencia activada!");
-            } else { alert("Clave no válida."); }
+                showToast(`¡Licencia de ${monthsAdded} mes(es) activada!`);
+            } else {
+                alert("La clave ingresada no es válida para este dispositivo.");
+            }
         }
 
+        // --- MANEJO DE CLIENTES ---
         const STORAGE_KEY = 'crm_elle_clientes';
         function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
         function handleFormSubmit(e) {
             e.preventDefault();
+            const nombre = document.getElementById('nombreCliente').value;
+            const telefono = document.getElementById('telefono').value;
+            const propiedad = document.getElementById('propiedadMostrada').value;
+            const fecha = document.getElementById('fechaVisita').value;
+
             const cliente = {
                 id: Date.now(),
-                nombreCliente: document.getElementById('nombreCliente').value,
-                telefono: document.getElementById('telefono').value,
+                nombreCliente: nombre,
+                telefono: telefono,
                 origenLead: document.getElementById('origenLead').value,
                 tipoInmueble: document.getElementById('tipoInmueble').value,
                 presupuesto: document.getElementById('presupuesto').value,
-                propiedadMostrada: document.getElementById('propiedadMostrada').value,
+                propiedadMostrada: propiedad,
                 estado: document.getElementById('estado').value,
-                fechaVisita: document.getElementById('fechaVisita').value,
+                fechaVisita: fecha,
             };
 
             const lista = getClientes();
             lista.unshift(cliente);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
 
+            if (fecha) {
+                addToGoogleCalendar(nombre, propiedad, fecha);
+            }
+
             document.getElementById('crm-form').reset();
             updateBadge();
             showToast("Cliente registrado ✨");
         }
 
-        // ABRIR CHAT EN WHATSAPP
         function openWhatsApp(telefono, nombre, propiedad) {
             const cleanPhone = telefono.replace(/\D/g, '');
-            // Espacio listo para incorporar la plantilla de mensaje personalizada
-            const mensaje = encodeURIComponent(`Hola ${nombre}, un gusto saludarte. Te contacto desde ELLE Real Estate respecto a ${propiedad || 'tu consulta sobre inmuebles'}.`);
+            const mensaje = encodeURIComponent(`Hola ${nombre}, te escribo respecto al inmueble ${propiedad || 'tu consulta'}.`);
             window.open(`https://wa.me/${cleanPhone}?text=${mensaje}`, '_blank');
         }
 
-        // AGENDAR EN GOOGLE CALENDAR
         function addToGoogleCalendar(nombre, propiedad, fechaVisita) {
-            if (!fechaVisita) return alert("No hay fecha de visita asignada para este cliente.");
-            
+            if (!fechaVisita) return;
             const start = new Date(fechaVisita);
-            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hora de duración
-
-            const formatGCalDate = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
+            const formatGCal = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
 
             const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
-            const details = encodeURIComponent(`Visita agendada para el inmueble: ${propiedad || 'Por definir'}.`);
-            const dates = `${formatGCalDate(start)}/${formatGCalDate(end)}`;
+            const details = encodeURIComponent(`Cliente: ${nombre}\nPropiedad: ${propiedad || 'No especificada'}`);
+            const dates = `${formatGCal(start)}/${formatGCal(end)}`;
 
-            const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
+            const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
             window.open(gcalUrl, '_blank');
         }
 
@@ -299,11 +343,11 @@
                     </div>
 
                     <div class="flex items-center gap-2 pt-2 border-t border-roseGold-100/60">
-                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
                             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                         </button>
                         ${c.fechaVisita ? `
-                            <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-3 py-2 bg-white hover:bg-roseGold-50 text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1 shadow-sm">
+                            <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-3 py-2 bg-white text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
                                 <i class="fa-regular fa-calendar-plus text-roseGold-500"></i> Agendar
                             </button>
                         ` : ''}
