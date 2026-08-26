@@ -210,8 +210,8 @@
     <section id="tab-list" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartera Activa</h2>
-            <button onclick="exportToCSV()" class="text-xs font-bold text-roseGold-600 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
-                <i class="fa-solid fa-file-excel mr-1"></i> Excel
+            <button onclick="exportToExcel()" class="text-xs font-bold text-roseGold-600 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100 flex items-center gap-1">
+                <i class="fa-solid fa-file-excel text-sm"></i> Excel
             </button>
         </div>
         <div id="clientes-container" class="space-y-3"></div>
@@ -313,7 +313,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON FORMATO DE TEXTO EXPLICITO PARA TELÉFONOS EN EXCEL -->
+    <!-- LÓGICA DE JAVASCRIPT CON EXPORTACIÓN HTML NATURA PARA EXCEL (.XLS) -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -656,40 +656,71 @@
             reader.readAsText(file);
         }
 
-        // FUNCIÓN EXPORTAR EXCEL CON FORMATO DE TEXTO EXPLICITO `="..."` PARA NÚMEROS TELEFÓNICOS
-        function exportToCSV() {
+        // FUNCIÓN DE EXPORTACIÓN DIRECTA A HOJA DE CÁLCULO EXCEL (.XLS) GARANTIZANDO COLUMNAS
+        function exportToExcel() {
             if(clientes.length === 0) return alert("No hay datos para exportar.");
             
-            let csvContent = "\uFEFFsep=;\nNombre Cliente;Telefono;Origen Lead;Tipo Inmueble;Presupuesto USD;Zona Interes;Propiedad Mostrada;Link Ubicacion;Asesor Mostro;Asesor Captador;Contacto Captador;Estado;Fecha Visita\n";
+            let tableHTML = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="utf-8">
+                    <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Cartera Clientes</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+                </head>
+                <body>
+                    <table border="1">
+                        <thead>
+                            <tr style="background-color: #f2a690; color: #ffffff; font-weight: bold;">
+                                <th>Nombre Cliente</th>
+                                <th>Telefono</th>
+                                <th>Origen Lead</th>
+                                <th>Tipo Inmueble</th>
+                                <th>Presupuesto USD</th>
+                                <th>Zona Interes</th>
+                                <th>Propiedad Mostrada</th>
+                                <th>Link Ubicacion</th>
+                                <th>Asesor Mostro</th>
+                                <th>Asesor Captador</th>
+                                <th>Contacto Captador</th>
+                                <th>Estado</th>
+                                <th>Fecha Visita</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
 
             clientes.forEach(c => {
-                let nombre = String(c.nombre || '').replace(/;/g, ',');
-                let telefono = String(c.telefono || '').replace(/;/g, '');
-                let origen = String(c.origen || '').replace(/;/g, ',');
-                let tipo = String(c.tipo || '').replace(/;/g, ',');
-                let presupuesto = String(c.presupuesto || '').replace(/;/g, ',');
-                let zona = String(c.zona || '').replace(/;/g, ',');
-                let propiedad = String(c.propiedad || '').replace(/;/g, ',');
-                let linkUbicacion = String(c.linkUbicacion || '').replace(/;/g, ',');
-                let asesorMostro = String(c.asesorMostro || '').replace(/;/g, ',');
-                let asesorCaptador = String(c.asesorCaptador || '').replace(/;/g, ',');
-                let contactoCaptador = String(c.contactoCaptador || '').replace(/;/g, '');
-                let estado = String(c.estado || '').replace(/;/g, ',');
-                let fechaVisita = String(c.fechaVisita || '').replace(/;/g, ',');
-
-                // Formato `="número"` fuerza a Excel a tratarlo como texto plano sin notación científica
-                let telFormatted = telefono ? `="${telefono}"` : '""';
-                let captadorTelFormatted = contactoCaptador ? `="${contactoCaptador}"` : '""';
-
-                csvContent += `"${nombre}";${telFormatted};"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${linkUbicacion}";"${asesorMostro}";"${asesorCaptador}";${captadorTelFormatted};"${estado}";"${fechaVisita}"\n`;
+                tableHTML += `
+                    <tr>
+                        <td>${c.nombre || ''}</td>
+                        <td style="mso-number-format:'\\@';">${c.telefono || ''}</td>
+                        <td>${c.origen || ''}</td>
+                        <td>${c.tipo || ''}</td>
+                        <td>${c.presupuesto || ''}</td>
+                        <td>${c.zona || ''}</td>
+                        <td>${c.propiedad || ''}</td>
+                        <td>${c.linkUbicacion || ''}</td>
+                        <td>${c.asesorMostro || ''}</td>
+                        <td>${c.asesorCaptador || ''}</td>
+                        <td style="mso-number-format:'\\@';">${c.contactoCaptador || ''}</td>
+                        <td>${c.estado || ''}</td>
+                        <td>${c.fechaVisita || ''}</td>
+                    </tr>
+                `;
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             
             const link = document.createElement("a");
             link.href = url;
-            link.download = `cartera_clientes_elle_crm.csv`;
+            link.download = `cartera_clientes_elle_crm.xls`;
             link.target = '_blank';
             document.body.appendChild(link);
             link.click();
