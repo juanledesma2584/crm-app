@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elle CRM Real Estate</title>
 
-    <!-- ÍCONO DE DIAMANTE DIRECTO EN SVG SIN ARCHIVOS EXTERNOS -->
+    <!-- ÍCONO DE DIAMANTE DIRECTO EN SVG -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FAF8F5'/><text y='70' x='10' font-size='75'>💎</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FAF8F5'/><text y='70' x='10' font-size='75'>💎</text></svg>">
@@ -56,7 +56,6 @@
                 <span class="text-[10px] font-bold tracking-widest uppercase text-roseGold-500">Exclusivo para Agentes</span>
                 <h1 class="text-2xl font-extrabold text-chicDark">ELLE <span class="font-normal text-roseGold-500">Real Estate</span></h1>
             </div>
-            <!-- ÍCONO DE DIAMANTE -->
             <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-roseGold-400 to-roseGold-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-roseGold-500/30">
                 <i class="fa-solid fa-gem"></i>
             </div>
@@ -140,7 +139,6 @@
                 <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
-            <!-- BLOQUE DE UBICACIÓN DESTACADO CON BOTÓN PEGAR -->
             <div class="bg-roseGold-50/70 p-3.5 rounded-2xl border border-roseGold-200/80 space-y-1.5">
                 <div class="flex justify-between items-center">
                     <label class="text-xs font-bold text-roseGold-600 flex items-center gap-1.5">
@@ -270,6 +268,13 @@
                 Seleccionar Archivo .JSON
             </button>
         </div>
+
+        <!-- BOTÓN DE LIMPIEZA DE EMERGENCIA -->
+        <div class="pt-4 border-t border-roseGold-100">
+            <button onclick="clearCorruptedData()" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 transition-all flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-trash-can"></i> Limpiar Registros Dañados
+            </button>
+        </div>
     </section>
 
     <!-- MODAL DE ACTIVACIÓN DIRECTO A JUAN LEDESMA -->
@@ -299,7 +304,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT COMPLETA DEL CRM -->
+    <!-- LÓGICA DE JAVASCRIPT COMPLETA Y ROBUSTA -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -307,10 +312,35 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             checkLicenseStatus();
+            // Normalizar clientes existentes para corregir "undefined"
+            clientes = clientes.map(c => normalizeCliente(c));
+            localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
             renderClientes();
             document.getElementById('msg-template-input').value = customMessageTemplate;
             getDeviceId();
         });
+
+        // Función para adaptar cualquier formato de cliente previo y evitar undefined
+        function normalizeCliente(c) {
+            if(!c) return null;
+            return {
+                id: String(c.id || c.clientId || Date.now() + Math.random()),
+                nombre: c.nombre || c.nombreCliente || c.clientName || 'Cliente sin nombre',
+                telefono: c.telefono || c.whatsapp || c.phone || '0981123456',
+                origen: c.origen || c.origenLead || 'Consulta',
+                tipo: c.tipo || c.tipoInmueble || 'Inmueble',
+                presupuesto: c.presupuesto || '',
+                zona: c.zona || c.zonaInteres || '',
+                propiedad: c.propiedad || c.propiedadMostrada || '',
+                linkUbicacion: c.linkUbicacion || '',
+                asesorMostro: c.asesorMostro || '',
+                asesorCaptador: c.asesorCaptador || '',
+                contactoCaptador: c.contactoCaptador || '',
+                estado: c.estado || 'Consulta',
+                fechaVisita: c.fechaVisita || '',
+                fechaCreacion: c.fechaCreacion || new Date().toISOString()
+            };
+        }
 
         function switchTab(tab) {
             activeTab = tab;
@@ -345,7 +375,7 @@
             const editId = document.getElementById('editClientId').value;
 
             const clienteData = {
-                id: editId ? editId : Date.now().toString(),
+                id: editId ? String(editId) : String(Date.now()),
                 nombre: document.getElementById('nombreCliente').value,
                 telefono: document.getElementById('telefono').value,
                 origen: document.getElementById('origenLead').value,
@@ -359,11 +389,11 @@
                 contactoCaptador: document.getElementById('contactoCaptador').value,
                 estado: document.getElementById('estado').value,
                 fechaVisita: document.getElementById('fechaVisita').value,
-                fechaCreacion: editId ? (clientes.find(c => c.id === editId)?.fechaCreacion || new Date().toISOString()) : new Date().toISOString()
+                fechaCreacion: editId ? (clientes.find(c => String(c.id) === String(editId))?.fechaCreacion || new Date().toISOString()) : new Date().toISOString()
             };
 
             if(editId) {
-                clientes = clientes.map(c => c.id === editId ? clienteData : c);
+                clientes = clientes.map(c => String(c.id) === String(editId) ? clienteData : c);
             } else {
                 clientes.unshift(clienteData);
             }
@@ -384,7 +414,8 @@
         }
 
         function editCliente(id) {
-            const c = clientes.find(item => item.id === id);
+            const targetId = String(id);
+            const c = clientes.find(item => String(item.id) === targetId);
             if(!c) return;
 
             document.getElementById('editClientId').value = c.id;
@@ -411,10 +442,20 @@
         }
 
         function deleteCliente(id) {
-            if(confirm("¿Estás seguro de eliminar este registro de cliente?")) {
-                clientes = clientes.filter(c => c.id !== id);
+            const targetId = String(id);
+            if(confirm("¿Estás seguro de eliminar este registro?")) {
+                clientes = clientes.filter(c => String(c.id) !== targetId);
                 localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
                 renderClientes();
+            }
+        }
+
+        function clearCorruptedData() {
+            if(confirm("¿Deseas vaciar la lista de clientes para limpiar registros dañados? Haz una copia previa si tienes datos importantes.")) {
+                clientes = [];
+                localStorage.removeItem('elle_crm_clientes');
+                renderClientes();
+                alert("Base de datos limpiada con éxito.");
             }
         }
 
@@ -473,7 +514,8 @@
         }
 
         function sendWhatsApp(id) {
-            const c = clientes.find(item => item.id === id);
+            const targetId = String(id);
+            const c = clientes.find(item => String(item.id) === targetId);
             if(!c) return;
 
             let msg = customMessageTemplate
@@ -481,7 +523,7 @@
                 .replace(/{propiedad}/g, c.propiedad || 'la propiedad de interés')
                 .replace(/{zona}/g, c.zona || 'la zona consultada');
 
-            let cleanPhone = c.telefono.replace(/\D/g, '');
+            let cleanPhone = String(c.telefono).replace(/\D/g, '');
             window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -513,10 +555,10 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     if(Array.isArray(data)) {
-                        clientes = data;
+                        clientes = data.map(item => normalizeCliente(item)).filter(item => item !== null);
                         localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
                         renderClientes();
-                        alert("Base de datos restaurada con éxito.");
+                        alert("Base de datos restaurada y normalizada con éxito.");
                     } else {
                         alert("El archivo no contiene un formato de respaldo válido.");
                     }
