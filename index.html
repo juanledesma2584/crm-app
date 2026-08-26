@@ -38,11 +38,11 @@
 </head>
 <body class="bg-sand text-slate-800 min-h-screen flex flex-col items-center p-3 sm:p-6 pb-20">
 
-    <!-- BARRA SUPERIOR DE LICENCIA -->
+    <!-- BARRA SUPERIOR DE LICENCIA DINÁMICA -->
     <div id="license-bar" class="w-full max-w-2xl mb-4 px-4 py-3 bg-white/90 backdrop-blur-md rounded-2xl border border-roseGold-100 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
             <div id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span id="license-status-text">Cargando estado...</span>
+            <span id="license-status-text">Calculando días...</span>
         </div>
         <button onclick="openLicenseModal()" class="text-xs text-roseGold-600 font-bold hover:underline flex items-center gap-1.5 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100">
             <i class="fa-solid fa-key"></i> Licencia
@@ -313,7 +313,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT COMPLETA Y INTEGRACIÓN DE CONTACTOS -->
+    <!-- LÓGICA DE JAVASCRIPT CON CONTADOR DE DÍAS REGRESIVO -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -328,7 +328,47 @@
             getDeviceId();
         });
 
-        // FUNCIÓN PARA ABRIR LA AGENDA DE CONTACTOS DEL CELULAR
+        // LÓGICA DE CONTROL Y DESCUENTO DE DÍAS DE LICENCIA
+        function checkLicenseStatus() {
+            let startDate = localStorage.getItem('elle_license_start_date');
+            const totalDays = 30;
+
+            if (!startDate) {
+                startDate = new Date().toISOString();
+                localStorage.setItem('elle_license_start_date', startDate);
+            }
+
+            const start = new Date(startDate);
+            const now = new Date();
+            const diffTime = now - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const remainingDays = totalDays - diffDays;
+
+            const textEl = document.getElementById('license-status-text');
+            const indicatorEl = document.getElementById('status-indicator');
+
+            if (remainingDays > 0) {
+                textEl.innerText = `Suscripción Activa (${remainingDays} día${remainingDays === 1 ? '' : 's'})`;
+                if (remainingDays <= 3) {
+                    indicatorEl.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+                    textEl.className = "text-amber-600 font-bold";
+                } else {
+                    indicatorEl.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                }
+            } else {
+                textEl.innerText = 'Suscripción Vencida (0 días)';
+                indicatorEl.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                
+                // Deshabilitar botón de guardar e informar al usuario
+                const saveBtn = document.getElementById('btn-save');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                openLicenseModal();
+            }
+        }
+
         async function pickContact(phoneFieldId, nameFieldId) {
             if ('contacts' in navigator && 'select' in navigator.contacts) {
                 try {
@@ -350,10 +390,10 @@
                         }
                     }
                 } catch (err) {
-                    console.log("Acceso a contactos cancelado o no disponible.");
+                    console.log("Acceso a contactos cancelado.");
                 }
             } else {
-                alert("Tu navegador o dispositivo no soporta la selección directa de contactos. Por favor, escribe el número manualmente.");
+                alert("Tu navegador o dispositivo no soporta la selección directa de contactos. Escribe el número manualmente.");
             }
         }
 
@@ -655,10 +695,6 @@
             }
             document.getElementById('device-id-display').innerText = id;
             return id;
-        }
-
-        function checkLicenseStatus() {
-            document.getElementById('license-status-text').innerText = 'Suscripción Activa (30 días)';
         }
 
         function openLicenseModal() {
