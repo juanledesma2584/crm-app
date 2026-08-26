@@ -303,7 +303,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT COMPATIBLE CON IPHONE Y ANDROID -->
+    <!-- LÓGICA DE JAVASCRIPT CORREGIDA PARA EXCEL EN IPHONE Y ANDROID -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -533,7 +533,6 @@
             }
         }
 
-        // FUNCIÓN DE BACKUP COMPATIBLE CON IPHONE (BLOB)
         function downloadBackupJSON() {
             const jsonStr = JSON.stringify(clientes, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -575,15 +574,24 @@
             reader.readAsText(file);
         }
 
-        // FUNCIÓN DE EXPORTACIÓN A EXCEL / CSV COMPATIBLE CON IPHONE
+        // FUNCIÓN EXPORTAR EXCEL/CSV CORREGIDA CON PUNTO Y COMA (;) Y CABECERA PARA IPHONE
         function exportToCSV() {
             if(clientes.length === 0) return alert("No hay datos para exportar.");
             
-            // \uFEFF fuerza la codificación UTF-8 para que Excel reconozca tildes en iPhone/Mac
-            let csvContent = "\uFEFFNombre,Telefono,Origen,Tipo,Presupuesto,Zona,Propiedad,Estado\n";
+            // sep=; obliga a Excel (en iOS y Windows) a separar exactamente por columnas
+            let csvContent = "\uFEFFsep=;\nNombre;Telefono;Origen;Tipo;Presupuesto;Zona;Propiedad;Estado\n";
 
             clientes.forEach(c => {
-                csvContent += `"${c.nombre}","${c.telefono}","${c.origen}","${c.tipo}","${c.presupuesto}","${c.zona}","${c.propiedad}","${c.estado}"\n`;
+                let nombre = String(c.nombre || '').replace(/;/g, ',');
+                let telefono = String(c.telefono || '').replace(/;/g, ',');
+                let origen = String(c.origen || '').replace(/;/g, ',');
+                let tipo = String(c.tipo || '').replace(/;/g, ',');
+                let presupuesto = String(c.presupuesto || '').replace(/;/g, ',');
+                let zona = String(c.zona || '').replace(/;/g, ',');
+                let propiedad = String(c.propiedad || '').replace(/;/g, ',');
+                let estado = String(c.estado || '').replace(/;/g, ',');
+
+                csvContent += `"${nombre}";"${telefono}";"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${estado}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
