@@ -272,7 +272,7 @@
         </div>
     </section>
 
-    <!-- MODAL DE ACTIVACIÓN CON BOTÓN DESTACADO A WHATSAPP -->
+    <!-- MODAL DE ACTIVACIÓN CON BOTÓN A TU WHATSAPP DIRECTO -->
     <div id="license-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white max-w-sm w-full p-6 rounded-3xl border border-roseGold-100 shadow-2xl text-center space-y-4">
             <div class="w-12 h-12 bg-roseGold-50 text-roseGold-500 rounded-2xl flex items-center justify-center mx-auto text-xl">
@@ -568,8 +568,9 @@
 
         function sendIdToAdminWhatsApp() {
             const deviceId = getDeviceId();
-            const adminPhone = "595981123456"; // Podés cambiar este número por el tuyo
-            const msg = `Hola, solicito la activación de licencia para ELLE CRM. Mi ID de dispositivo es: ${deviceId}`;
+            const adminPhone = "595971929866"; // Tu número directo de WhatsApp
+            const msg = `Estimado Administrador,\n\nSolicito cordialmente la habilitación de una membresía temporal para el uso de la aplicación ELLE CRM.\n\nMi ID de Dispositivo registrado es: ${deviceId}\n\nQuedo a la espera de sus comentarios. Muchas gracias.`;
+            
             window.open(`https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
     </script>
