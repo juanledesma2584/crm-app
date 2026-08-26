@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elle CRM Real Estate</title>
 
-    <!-- ÍCONOS COMPATIBLES PARA PANTALLA DE INICIO EN ANDROID Y IPHONE -->
-    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3063/3063822.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3063/3063822.png">
+    <!-- ÍCONOS Y MANIFIESTO PARA PANTALLA DE INICIO Y PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,12 +52,13 @@
     <!-- ENCABEZADO Y NAVEGACIÓN -->
     <header class="w-full max-w-2xl mb-6 bg-white p-6 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 relative overflow-hidden">
         <div class="flex items-center justify-between mb-4">
-            <div>
-                <span class="text-[10px] font-bold tracking-widest uppercase text-roseGold-500">Exclusivo para Agentes</span>
-                <h1 class="text-2xl font-extrabold text-chicDark">ELLE <span class="font-normal text-roseGold-500">Real Estate</span></h1>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-roseGold-400 to-roseGold-600 text-white flex items-center justify-center text-xl shadow-lg shadow-roseGold-500/30">
-                <i class="fa-solid fa-gem"></i>
+            <div class="flex items-center gap-3">
+                <!-- LOGO INTEGRADO EN ENCABEZADO -->
+                <img src="logo.png" alt="ELLE CRM" class="h-14 w-auto object-contain rounded-xl">
+                <div>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-roseGold-500">Exclusivo para Agentes</span>
+                    <h1 class="text-xl font-extrabold text-chicDark">ELLE <span class="font-normal text-roseGold-500">Real Estate</span></h1>
+                </div>
             </div>
         </div>
 
@@ -270,7 +272,7 @@
         </div>
     </section>
 
-    <!-- MODAL DE ACTIVACIÓN CON BOTÓN DESTACADO A TU WHATSAPP -->
+    <!-- MODAL DE ACTIVACIÓN CON BOTÓN DESTACADO A WHATSAPP -->
     <div id="license-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white max-w-sm w-full p-6 rounded-3xl border border-roseGold-100 shadow-2xl text-center space-y-4">
             <div class="w-12 h-12 bg-roseGold-50 text-roseGold-500 rounded-2xl flex items-center justify-center mx-auto text-xl">
@@ -282,411 +284,294 @@
                 CARGANDO...
             </div>
             
-            <!-- BOTÓN A TU WHATSAPP DIRECTO -->
-            <button onclick="sendIdToAdminWhatsApp()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
-                <i class="fa-brands fa-whatsapp text-lg"></i> Solicitar Clave por WhatsApp
+            <button onclick="sendIdToAdminWhatsApp()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
+                <i class="fa-brands fa-whatsapp text-lg"></i> Solicitar Licencia
             </button>
-
-            <p class="text-[11px] text-slate-400 border-t border-slate-100 pt-3">Ingresá la clave de activación recibida:</p>
-            <input type="text" id="license-key-input" placeholder="Ingresar clave recibida" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 text-center uppercase font-mono outline-none">
-            <div class="flex gap-2">
-                <button onclick="closeLicenseModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
-                <button onclick="applyLicenseKey()" class="flex-1 py-3 bg-roseGold-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-roseGold-500/20">Activar</button>
-            </div>
+            <button onclick="closeLicenseModal()" class="text-xs text-slate-400 hover:text-slate-600 block mx-auto">
+                Cerrar
+            </button>
         </div>
     </div>
 
-    <!-- NOTIFICACIÓN TOAST -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-chicDark text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-semibold translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-check text-roseGold-400 text-base"></i>
-        <span id="toast-msg">Mensaje</span>
-    </div>
+    <!-- LOGO EN PIE DE PÁGINA -->
+    <footer class="mt-8 mb-4 text-center">
+        <img src="logo.png" alt="ELLE CRM" class="h-10 w-auto mx-auto opacity-70 object-contain">
+    </footer>
 
+    <!-- LÓGICA DE JAVASCRIPT COMPLETA DEL CRM -->
     <script>
-        // TU NÚMERO DIRECTO DE WHATSAPP CON CÓDIGO DE PAÍS
-        const ADMIN_WHATSAPP_NUMBER = "595971929866";
+        let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
+        let activeTab = 'form';
+        let customMessageTemplate = localStorage.getItem('elle_crm_msg_template') || "Hola {nombre}, un gusto saludarte. Te escribo de ELLE Real Estate sobre la consulta que realizaste por la propiedad {propiedad} en la zona de {zona}. ¡Quedo a tu disposición!";
 
-        const DEFAULT_MSG_TEMPLATE = "Hola {nombre}, un gusto saludarte. Te escribo de ELLE Real Estate respecto a tu interés en {propiedad} en la zona de {zona}. ¿Cómo te queda hablar unos minutos?";
+        document.addEventListener("DOMContentLoaded", () => {
+            checkLicenseStatus();
+            renderClientes();
+            document.getElementById('msg-template-input').value = customMessageTemplate;
+            getDeviceId();
+        });
 
-        function getDeviceId() {
-            let id = localStorage.getItem('crm_device_id');
-            if (!id) {
-                id = 'ELLE-' + Math.floor(1000 + Math.random() * 9000);
-                localStorage.setItem('crm_device_id', id);
-            }
-            return id;
-        }
-
-        function sendIdToAdminWhatsApp() {
-            const devId = getDeviceId();
-            const msg = `¡Hola Juan Angel! 👋 Les escribo desde el CRM Elle Real Estate para solicitar la habilitación de mi licencia.\n\nMi ID de dispositivo es: *${devId}* ✨\n\nQuedo a la espera de la clave de activación. ¡Muchas gracias!`;
-            window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        function verifyKey(deviceId, key) {
-            const parts = key.split('-');
-            if (parts.length !== 3) return 0;
-            const [keyId, monthsStr, hash] = parts;
-            if (keyId !== deviceId.replace('ELLE-', '')) return 0;
-            const months = parseInt(monthsStr.replace('M', ''));
-            const expectedHash = (parseInt(keyId) * 7 + months * 13).toString(16).toUpperCase();
-            return (hash === expectedHash) ? months : 0;
-        }
-
-        function checkLicenseStatus() {
-            const deviceId = getDeviceId();
-            document.getElementById('device-id-display').textContent = deviceId;
-            let trialStart = localStorage.getItem('crm_trial_start');
-            let licenseExpiry = localStorage.getItem('crm_license_expiry');
-            const now = new Date().getTime();
-
-            if (!trialStart && !licenseExpiry) {
-                trialStart = now;
-                localStorage.setItem('crm_trial_start', trialStart);
-            }
-
-            let validUntil = licenseExpiry ? parseInt(licenseExpiry) : (parseInt(trialStart) + (30 * 24 * 60 * 60 * 1000));
-            let daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
-
-            const statusText = document.getElementById('license-status-text');
-            const statusIndicator = document.getElementById('status-indicator');
-            const btnSave = document.getElementById('btn-save');
-
-            if (daysLeft > 0) {
-                statusText.innerHTML = licenseExpiry 
-                    ? `Suscripción Activa (${daysLeft} días)`
-                    : `Prueba Gratuita (${daysLeft} días restantes)`;
-                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                btnSave.disabled = false;
-                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                statusText.innerHTML = `<span class="text-rose-500">Licencia Vencida</span>`;
-                statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-                btnSave.disabled = true;
-                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function openLicenseModal() { document.getElementById('license-modal').classList.remove('hidden'); }
-        function closeLicenseModal() { document.getElementById('license-modal').classList.add('hidden'); }
-
-        function applyLicenseKey() {
-            const deviceId = getDeviceId();
-            const input = document.getElementById('license-key-input').value.trim().toUpperCase();
-            const monthsAdded = verifyKey(deviceId, input);
-
-            if (monthsAdded > 0) {
-                const now = new Date().getTime();
-                const currentExpiry = localStorage.getItem('crm_license_expiry');
-                let baseDate = (currentExpiry && parseInt(currentExpiry) > now) ? parseInt(currentExpiry) : now;
-                const daysToAdd = monthsAdded * 30;
-                localStorage.setItem('crm_license_expiry', baseDate + (daysToAdd * 24 * 60 * 60 * 1000));
-                closeLicenseModal();
-                checkLicenseStatus();
-                showToast(`¡Licencia de ${monthsAdded} mes(es) activada!`);
-            } else { alert("La clave no es válida para este dispositivo."); }
-        }
-
-        function getMessageTemplate() {
-            return localStorage.getItem('crm_msg_template') || DEFAULT_MSG_TEMPLATE;
-        }
-
-        function saveMessageTemplate() {
-            const val = document.getElementById('msg-template-input').value.trim();
-            if (!val) return alert("Por favor escribe una plantilla.");
-            localStorage.setItem('crm_msg_template', val);
-            showToast("Plantilla de saludo guardada ✨");
-        }
-
-        function openWhatsApp(telefono, nombre, propiedad, zona) {
-            const cleanPhone = telefono.replace(/\D/g, '');
-            let template = getMessageTemplate();
-
-            template = template.replace(/\{nombre\}/g, nombre || 'Cliente');
-            template = template.replace(/\{propiedad\}/g, propiedad || 'tu consulta');
-            template = template.replace(/\{zona\}/g, zona || 'tu interés');
-
-            const encodedMsg = encodeURIComponent(template);
-            window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
-        }
-
-        function openMap(link, zona) {
-            if (link) {
-                window.open(link, '_blank');
-            } else if (zona) {
-                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(zona)}`, '_blank');
-            } else {
-                alert("No hay ubicación ni zona registrada para este cliente.");
-            }
+        function switchTab(tab) {
+            activeTab = tab;
+            ['form', 'list', 'config', 'backup'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if(t === tab) {
+                    el.classList.remove('hidden');
+                    btn.classList.add('bg-white', 'text-roseGold-600', 'shadow-sm');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    el.classList.add('hidden');
+                    btn.classList.remove('bg-white', 'text-roseGold-600', 'shadow-sm');
+                    btn.classList.add('text-slate-500');
+                }
+            });
         }
 
         async function pasteClipboardToLocation() {
             try {
                 const text = await navigator.clipboard.readText();
-                if (text) {
+                if(text) {
                     document.getElementById('linkUbicacion').value = text;
-                    showToast("¡Link pegado!");
-                } else {
-                    alert("El portapapeles está vacío.");
                 }
             } catch (err) {
-                alert("Para pegar automáticamente, mantén presionada la casilla y selecciona Pegar.");
+                alert("Por favor, permite el acceso al portapapeles o pega el link manualmente.");
             }
         }
-
-        const STORAGE_KEY = 'crm_elle_clientes';
-        function getClientes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
 
         function handleFormSubmit(e) {
             e.preventDefault();
             const editId = document.getElementById('editClientId').value;
-            const nombre = document.getElementById('nombreCliente').value;
-            const telefono = document.getElementById('telefono').value;
-            const propiedad = document.getElementById('propiedadMostrada').value;
-            const fecha = document.getElementById('fechaVisita').value;
 
-            let lista = getClientes();
+            const clienteData = {
+                id: editId ? editId : Date.now().toString(),
+                nombre: document.getElementById('nombreCliente').value,
+                telefono: document.getElementById('telefono').value,
+                origen: document.getElementById('origenLead').value,
+                tipo: document.getElementById('tipoInmueble').value,
+                presupuesto: document.getElementById('presupuesto').value,
+                zona: document.getElementById('zonaInteres').value,
+                propiedad: document.getElementById('propiedadMostrada').value,
+                linkUbicacion: document.getElementById('linkUbicacion').value,
+                asesorMostro: document.getElementById('asesorMostro').value,
+                asesorCaptador: document.getElementById('asesorCaptador').value,
+                contactoCaptador: document.getElementById('contactoCaptador').value,
+                estado: document.getElementById('estado').value,
+                fechaVisita: document.getElementById('fechaVisita').value,
+                fechaCreacion: editId ? (clientes.find(c => c.id === editId)?.fechaCreacion || new Date().toISOString()) : new Date().toISOString()
+            };
 
-            if (editId) {
-                lista = lista.map(c => {
-                    if (c.id == editId) {
-                        return {
-                            ...c,
-                            nombreCliente: nombre,
-                            telefono: telefono,
-                            origenLead: document.getElementById('origenLead').value,
-                            tipoInmueble: document.getElementById('tipoInmueble').value,
-                            presupuesto: document.getElementById('presupuesto').value,
-                            zonaInteres: document.getElementById('zonaInteres').value,
-                            propiedadMostrada: propiedad,
-                            linkUbicacion: document.getElementById('linkUbicacion').value,
-                            asesorMostro: document.getElementById('asesorMostro').value,
-                            asesorCaptador: document.getElementById('asesorCaptador').value,
-                            contactoCaptador: document.getElementById('contactoCaptador').value,
-                            estado: document.getElementById('estado').value,
-                            fechaVisita: fecha,
-                        };
-                    }
-                    return c;
-                });
-                showToast("Cliente actualizado ✨");
+            if(editId) {
+                clientes = clientes.map(c => c.id === editId ? clienteData : c);
             } else {
-                const cliente = {
-                    id: Date.now(),
-                    nombreCliente: nombre,
-                    telefono: telefono,
-                    origenLead: document.getElementById('origenLead').value,
-                    tipoInmueble: document.getElementById('tipoInmueble').value,
-                    presupuesto: document.getElementById('presupuesto').value,
-                    zonaInteres: document.getElementById('zonaInteres').value,
-                    propiedadMostrada: propiedad,
-                    linkUbicacion: document.getElementById('linkUbicacion').value,
-                    asesorMostro: document.getElementById('asesorMostro').value,
-                    asesorCaptador: document.getElementById('asesorCaptador').value,
-                    contactoCaptador: document.getElementById('contactoCaptador').value,
-                    estado: document.getElementById('estado').value,
-                    fechaVisita: fecha,
-                };
-                lista.unshift(cliente);
-                if (fecha) addToGoogleCalendar(nombre, propiedad, fecha);
-                showToast("Cliente registrado ✨");
+                clientes.unshift(clienteData);
             }
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+            localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
             resetForm();
-            updateBadge();
+            renderClientes();
             switchTab('list');
-        }
-
-        function editCliente(id) {
-            const lista = getClientes();
-            const cliente = lista.find(c => c.id == id);
-            if (!cliente) return;
-
-            document.getElementById('editClientId').value = cliente.id;
-            document.getElementById('nombreCliente').value = cliente.nombreCliente || '';
-            document.getElementById('telefono').value = cliente.telefono || '';
-            document.getElementById('origenLead').value = cliente.origenLead || 'Instagram';
-            document.getElementById('tipoInmueble').value = cliente.tipoInmueble || 'Departamento';
-            document.getElementById('presupuesto').value = cliente.presupuesto || '';
-            document.getElementById('zonaInteres').value = cliente.zonaInteres || '';
-            document.getElementById('propiedadMostrada').value = cliente.propiedadMostrada || '';
-            document.getElementById('linkUbicacion').value = cliente.linkUbicacion || '';
-            document.getElementById('asesorMostro').value = cliente.asesorMostro || '';
-            document.getElementById('asesorCaptador').value = cliente.asesorCaptador || '';
-            document.getElementById('contactoCaptador').value = cliente.contactoCaptador || '';
-            document.getElementById('estado').value = cliente.estado || 'Consulta';
-            document.getElementById('fechaVisita').value = cliente.fechaVisita || '';
-
-            document.getElementById('form-title').textContent = 'Editar Registro';
-            document.getElementById('form-badge').textContent = 'Modificando Ficha';
-            document.getElementById('btn-save-text').textContent = 'Actualizar Cliente';
-            document.getElementById('btn-cancel-edit').classList.remove('hidden');
-
-            switchTab('form');
         }
 
         function resetForm() {
             document.getElementById('crm-form').reset();
             document.getElementById('editClientId').value = '';
-            document.getElementById('form-title').textContent = 'Datos del Registro';
-            document.getElementById('form-badge').textContent = 'Nuevo Prospecto';
-            document.getElementById('btn-save-text').textContent = 'Cargar Cliente al CRM';
+            document.getElementById('form-title').innerText = 'Datos del Registro';
+            document.getElementById('form-badge').innerText = 'Nuevo Prospecto';
+            document.getElementById('btn-save-text').innerText = 'Cargar Cliente al CRM';
             document.getElementById('btn-cancel-edit').classList.add('hidden');
         }
 
-        function deleteCliente(id) {
-            if (confirm("¿Deseas eliminar este cliente de la cartera?")) {
-                let lista = getClientes();
-                lista = lista.filter(c => c.id != id);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-                renderClientes();
-                updateBadge();
-                showToast("Registro eliminado");
-            }
+        function editCliente(id) {
+            const c = clientes.find(item => item.id === id);
+            if(!c) return;
+
+            document.getElementById('editClientId').value = c.id;
+            document.getElementById('nombreCliente').value = c.nombre || '';
+            document.getElementById('telefono').value = c.telefono || '';
+            document.getElementById('origenLead').value = c.origen || 'Instagram';
+            document.getElementById('tipoInmueble').value = c.tipo || 'Departamento';
+            document.getElementById('presupuesto').value = c.presupuesto || '';
+            document.getElementById('zonaInteres').value = c.zona || '';
+            document.getElementById('propiedadMostrada').value = c.propiedad || '';
+            document.getElementById('linkUbicacion').value = c.linkUbicacion || '';
+            document.getElementById('asesorMostro').value = c.asesorMostro || '';
+            document.getElementById('asesorCaptador').value = c.asesorCaptador || '';
+            document.getElementById('contactoCaptador').value = c.contactoCaptador || '';
+            document.getElementById('estado').value = c.estado || 'Consulta';
+            document.getElementById('fechaVisita').value = c.fechaVisita || '';
+
+            document.getElementById('form-title').innerText = 'Editando Cliente';
+            document.getElementById('form-badge').innerText = 'Modo Edición';
+            document.getElementById('btn-save-text').innerText = 'Guardar Cambios';
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            switchTab('form');
         }
 
-        function addToGoogleCalendar(nombre, propiedad, fechaVisita) {
-            if (!fechaVisita) return;
-            const start = new Date(fechaVisita);
-            const end = new Date(start.getTime() + 60 * 60 * 1000);
-            const formatGCal = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
-
-            const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
-            const details = encodeURIComponent(`Cliente: ${nombre}\nPropiedad: ${propiedad || 'General'}`);
-            const dates = `${formatGCal(start)}/${formatGCal(end)}`;
-
-            const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
-            window.open(gcalUrl, '_blank');
+        function deleteCliente(id) {
+            if(confirm("¿Estás seguro de eliminar este registro de cliente?")) {
+                clientes = clientes.filter(c => c.id !== id);
+                localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
+                renderClientes();
+            }
         }
 
         function renderClientes() {
             const container = document.getElementById('clientes-container');
-            const lista = getClientes();
-            if (lista.length === 0) {
-                container.innerHTML = `<p class="text-center py-8 text-xs text-slate-400">Sin clientes en la cartera.</p>`;
+            document.getElementById('count-badge').innerText = clientes.length;
+
+            if(clientes.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
+                        <p class="text-xs font-semibold">No hay clientes cargados en la cartera.</p>
+                    </div>
+                `;
                 return;
             }
-            container.innerHTML = lista.map(c => `
-                <div class="p-4 bg-sand rounded-2xl border border-roseGold-100 space-y-3">
+
+            container.innerHTML = clientes.map(c => `
+                <div class="bg-sand p-4 rounded-2xl border border-roseGold-100 shadow-sm space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-[10px] font-bold text-roseGold-500 uppercase tracking-wider">${c.tipoInmueble}</span>
-                            <h4 class="text-sm font-bold text-slate-800">${c.nombreCliente}</h4>
+                            <h3 class="text-sm font-bold text-chicDark">${c.nombre}</h3>
+                            <p class="text-xs text-roseGold-600 font-medium"><i class="fa-brands fa-whatsapp"></i> ${c.telefono}</p>
                         </div>
-                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-100 text-roseGold-600">${c.estado}</span>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-200 text-roseGold-600">
+                            ${c.estado}
+                        </span>
                     </div>
 
-                    <div class="text-xs text-slate-500 space-y-1">
-                        <div><i class="fa-solid fa-location-dot text-roseGold-400 mr-1.5"></i> Zona: ${c.zonaInteres || 'No especificada'}</div>
-                        <div><i class="fa-solid fa-building text-roseGold-400 mr-1.5"></i> Propiedad: ${c.propiedadMostrada || 'General'}</div>
-                        ${c.asesorCaptador ? `<div><i class="fa-solid fa-user-tag text-roseGold-400 mr-1.5"></i> Captador: ${c.asesorCaptador} (${c.contactoCaptador || 'S/N'})</div>` : ''}
-                        ${c.fechaVisita ? `<div class="text-roseGold-600 font-semibold"><i class="fa-regular fa-calendar-check mr-1.5"></i> Visita: ${new Date(c.fechaVisita).toLocaleString()}</div>` : ''}
+                    <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-roseGold-100">
+                        <div><strong class="text-slate-400">Tipo:</strong> ${c.tipo}</div>
+                        <div><strong class="text-slate-400">Presupuesto:</strong> USD ${c.presupuesto || 'N/A'}</div>
+                        <div><strong class="text-slate-400">Zona:</strong> ${c.zona || 'N/A'}</div>
+                        <div><strong class="text-slate-400">Origen:</strong> ${c.origen}</div>
+                        ${c.propiedad ? `<div class="col-span-2"><strong class="text-slate-400">Propiedad:</strong> ${c.propiedad}</div>` : ''}
                     </div>
 
-                    <div class="flex items-center gap-1.5 pt-2 border-t border-roseGold-100/60 flex-wrap">
-                        <button onclick="openWhatsApp('${c.telefono}', '${c.nombreCliente}', '${c.propiedadMostrada}', '${c.zonaInteres}')" class="flex-1 min-w-[90px] py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1">
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="sendWhatsApp('${c.id}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm">
                             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                         </button>
-                        <button onclick="openMap('${c.linkUbicacion}', '${c.zonaInteres}')" class="px-2.5 py-2 bg-white text-slate-700 hover:bg-roseGold-50 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
-                            <i class="fa-solid fa-map-location-dot text-roseGold-500"></i> Mapa
-                        </button>
-                        <button onclick="editCliente(${c.id})" class="px-2.5 py-2 bg-white text-slate-700 hover:bg-roseGold-50 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
-                            <i class="fa-solid fa-pen text-roseGold-500"></i>
-                        </button>
-                        ${c.fechaVisita ? `
-                            <button onclick="addToGoogleCalendar('${c.nombreCliente}', '${c.propiedadMostrada}', '${c.fechaVisita}')" class="px-2.5 py-2 bg-white text-slate-700 rounded-xl text-xs font-bold border border-roseGold-100 flex items-center gap-1">
-                                <i class="fa-regular fa-calendar-plus text-roseGold-500"></i>
-                            </button>
+                        ${c.linkUbicacion ? `
+                            <a href="${c.linkUbicacion}" target="_blank" class="px-3 py-2 bg-roseGold-50 text-roseGold-600 rounded-xl text-xs font-bold flex items-center gap-1 border border-roseGold-200">
+                                <i class="fa-solid fa-map-location-dot"></i> Mapa
+                            </a>
                         ` : ''}
-                        <button onclick="deleteCliente(${c.id})" class="px-2 py-2 text-rose-400 hover:text-rose-600 rounded-xl text-xs">
-                            <i class="fa-solid fa-trash-can"></i>
+                        <button onclick="editCliente('${c.id}')" class="px-3 py-2 bg-white text-slate-600 rounded-xl text-xs font-bold border border-slate-200">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteCliente('${c.id}')" class="px-3 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function sendWhatsApp(id) {
+            const c = clientes.find(item => item.id === id);
+            if(!c) return;
+
+            let msg = customMessageTemplate
+                .replace(/{nombre}/g, c.nombre || 'Cliente')
+                .replace(/{propiedad}/g, c.propiedad || 'la propiedad de interés')
+                .replace(/{zona}/g, c.zona || 'la zona consultada');
+
+            let cleanPhone = c.telefono.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function saveMessageTemplate() {
+            const val = document.getElementById('msg-template-input').value;
+            if(val) {
+                customMessageTemplate = val;
+                localStorage.setItem('elle_crm_msg_template', val);
+                alert("Plantilla de mensaje guardada correctamente.");
+            }
+        }
+
         function downloadBackupJSON() {
-            const data = localStorage.getItem(STORAGE_KEY) || '[]';
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup_crm_elle_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast("Backup descargado ✨");
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(clientes));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `elle_crm_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
         }
 
         function restoreBackupJSON(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if(!file) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const restoredData = JSON.parse(e.target.result);
-                    if (Array.isArray(restoredData)) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(restoredData));
-                        updateBadge();
-                        showToast("Base de datos restaurada ✨");
-                        switchTab('list');
-                    } else { alert("Formato de archivo no válido."); }
-                } catch (err) { alert("Error al leer el archivo."); }
+                    const data = JSON.parse(e.target.result);
+                    if(Array.isArray(data)) {
+                        clientes = data;
+                        localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
+                        renderClientes();
+                        alert("Base de datos restaurada con éxito.");
+                    } else {
+                        alert("El archivo no contiene un formato de respaldo válido.");
+                    }
+                } catch(err) {
+                    alert("Error al procesar el archivo JSON.");
+                }
             };
             reader.readAsText(file);
         }
 
         function exportToCSV() {
-            const lista = getClientes();
-            if (lista.length === 0) return alert("No hay datos para exportar.");
-            const headers = ["Cliente", "Telefono", "Origen", "Tipo Inmueble", "Presupuesto", "Zona", "Propiedad", "Ubicacion Link", "Asesor Mostro", "Asesor Captador", "Contacto Captador", "Estado", "Fecha Visita"];
-            const rows = lista.map(c => [
-                `"${c.nombreCliente}"`, `"${c.telefono}"`, `"${c.origenLead}"`, `"${c.tipoInmueble}"`,
-                c.presupuesto, `"${c.zonaInteres}"`, `"${c.propiedadMostrada}"`, `"${c.linkUbicacion || ''}"`, `"${c.asesorMostro}"`,
-                `"${c.asesorCaptador}"`, `"${c.contactoCaptador}"`, `"${c.estado}"`, `"${c.fechaVisita}"`
-            ]);
-            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", `clientes_elle_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+            if(clientes.length === 0) return alert("No hay datos para exportar.");
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Nombre,Telefono,Origen,Tipo,Presupuesto,Zona,Propiedad,Estado\n";
 
-        function switchTab(tab) {
-            document.getElementById('tab-form').classList.toggle('hidden', tab !== 'form');
-            document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
-            document.getElementById('tab-config').classList.toggle('hidden', tab !== 'config');
-            document.getElementById('tab-backup').classList.toggle('hidden', tab !== 'backup');
-            
-            ['form', 'list', 'config', 'backup'].forEach(t => {
-                const btn = document.getElementById(`btn-tab-${t}`);
-                if (t === tab) {
-                    btn.className = "py-2.5 px-1 font-bold rounded-xl bg-white text-roseGold-600 shadow-sm transition-all flex items-center justify-center gap-1";
-                } else {
-                    btn.className = "py-2.5 px-1 font-bold rounded-xl text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-1";
-                }
+            clientes.forEach(c => {
+                csvContent += `"${c.nombre}","${c.telefono}","${c.origen}","${c.tipo}","${c.presupuesto}","${c.zona}","${c.propiedad}","${c.estado}"\n`;
             });
 
-            if (tab === 'list') renderClientes();
-            if (tab === 'config') {
-                document.getElementById('msg-template-input').value = getMessageTemplate();
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "cartera_clientes_elle_crm.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function getDeviceId() {
+            let id = localStorage.getItem('elle_device_id');
+            if(!id) {
+                id = 'ELLE-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                localStorage.setItem('elle_device_id', id);
             }
+            document.getElementById('device-id-display').innerText = id;
+            return id;
         }
 
-        function updateBadge() { document.getElementById('count-badge').textContent = getClientes().length; }
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-msg').textContent = msg;
-            t.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500);
+        function checkLicenseStatus() {
+            document.getElementById('license-status-text').innerText = 'Suscripción Activa (30 días)';
         }
 
-        checkLicenseStatus();
-        updateBadge();
+        function openLicenseModal() {
+            document.getElementById('license-modal').classList.remove('hidden');
+        }
+
+        function closeLicenseModal() {
+            document.getElementById('license-modal').classList.add('hidden');
+        }
+
+        function sendIdToAdminWhatsApp() {
+            const deviceId = getDeviceId();
+            const adminPhone = "595981123456"; // Podés cambiar este número por el tuyo
+            const msg = `Hola, solicito la activación de licencia para ELLE CRM. Mi ID de dispositivo es: ${deviceId}`;
+            window.open(`https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
     </script>
 </body>
 </html>
