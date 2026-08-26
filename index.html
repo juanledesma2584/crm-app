@@ -313,7 +313,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON CONTADOR DE DÍAS REGRESIVO -->
+    <!-- LÓGICA DE JAVASCRIPT CON EXPORTACIÓN A EXCEL COMPLETA (13 COLUMNAS) -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -328,7 +328,6 @@
             getDeviceId();
         });
 
-        // LÓGICA DE CONTROL Y DESCUENTO DE DÍAS DE LICENCIA
         function checkLicenseStatus() {
             let startDate = localStorage.getItem('elle_license_start_date');
             const totalDays = 30;
@@ -359,7 +358,6 @@
                 textEl.innerText = 'Suscripción Vencida (0 días)';
                 indicatorEl.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
                 
-                // Deshabilitar botón de guardar e informar al usuario
                 const saveBtn = document.getElementById('btn-save');
                 if (saveBtn) {
                     saveBtn.disabled = true;
@@ -567,6 +565,8 @@
                         <div><strong class="text-slate-400">Zona:</strong> ${c.zona || 'N/A'}</div>
                         <div><strong class="text-slate-400">Origen:</strong> ${c.origen}</div>
                         ${c.propiedad ? `<div class="col-span-2"><strong class="text-slate-400">Propiedad:</strong> ${c.propiedad}</div>` : ''}
+                        ${c.asesorMostro ? `<div><strong class="text-slate-400">Mostró:</strong> ${c.asesorMostro}</div>` : ''}
+                        ${c.asesorCaptador ? `<div><strong class="text-slate-400">Captador:</strong> ${c.asesorCaptador}</div>` : ''}
                     </div>
 
                     <div class="flex gap-2 pt-1">
@@ -653,10 +653,11 @@
             reader.readAsText(file);
         }
 
+        // FUNCIÓN EXPORTAR EXCEL/CSV COMPLETA CON TODAS LAS 13 COLUMNAS DEL FORMULARIO
         function exportToCSV() {
             if(clientes.length === 0) return alert("No hay datos para exportar.");
             
-            let csvContent = "\uFEFFsep=;\nNombre;Telefono;Origen;Tipo;Presupuesto;Zona;Propiedad;Estado\n";
+            let csvContent = "\uFEFFsep=;\nNombre Cliente;Telefono;Origen Lead;Tipo Inmueble;Presupuesto USD;Zona Interes;Propiedad Mostrada;Link Ubicacion;Asesor Mostro;Asesor Captador;Contacto Captador;Estado;Fecha Visita\n";
 
             clientes.forEach(c => {
                 let nombre = String(c.nombre || '').replace(/;/g, ',');
@@ -666,9 +667,14 @@
                 let presupuesto = String(c.presupuesto || '').replace(/;/g, ',');
                 let zona = String(c.zona || '').replace(/;/g, ',');
                 let propiedad = String(c.propiedad || '').replace(/;/g, ',');
+                let linkUbicacion = String(c.linkUbicacion || '').replace(/;/g, ',');
+                let asesorMostro = String(c.asesorMostro || '').replace(/;/g, ',');
+                let asesorCaptador = String(c.asesorCaptador || '').replace(/;/g, ',');
+                let contactoCaptador = String(c.contactoCaptador || '').replace(/;/g, ',');
                 let estado = String(c.estado || '').replace(/;/g, ',');
+                let fechaVisita = String(c.fechaVisita || '').replace(/;/g, ',');
 
-                csvContent += `"${nombre}";"${telefono}";"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${estado}"\n`;
+                csvContent += `"${nombre}";"${telefono}";"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${linkUbicacion}";"${asesorMostro}";"${asesorCaptador}";"${contactoCaptador}";"${estado}";"${fechaVisita}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
