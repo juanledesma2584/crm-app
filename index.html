@@ -34,6 +34,10 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- LIBRERÍA SHEETJS PARA EXCEL NATIVO (.XLSX) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
 </head>
 <body class="bg-sand text-slate-800 min-h-screen flex flex-col items-center p-3 sm:p-6 pb-20">
@@ -118,7 +122,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Inmueble</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Inmueble Preferido</label>
                     <select id="tipoInmueble" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                         <option value="Departamento">Departamento</option>
                         <option value="Casa">Casa</option>
@@ -139,9 +143,17 @@
                 <input type="text" id="zonaInteres" placeholder="Ej. Asunción, Villa Morra, Mburucuyá" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
             </div>
 
+            <!-- CAMPO MÚLTIPLE DE INMUEBLES DE INTERÉS -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Propiedad Mostrada</label>
-                <input type="text" id="propiedadMostrada" placeholder="Ej. Casa en Villa Morra, ref. 102" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-bold text-slate-700">Propiedad(es) de Interés / Mostrada(s)</label>
+                    <button type="button" onclick="addPropiedadInput()" class="text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Agregar Inmueble
+                    </button>
+                </div>
+                <div id="propiedades-container" class="space-y-2">
+                    <input type="text" class="propiedad-item w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all" placeholder="Ej. Dpto 2D Villa Morra, Edif. Elle">
+                </div>
             </div>
 
             <div class="bg-roseGold-50/70 p-3.5 rounded-2xl border border-roseGold-200/80 space-y-1.5">
@@ -211,7 +223,7 @@
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartera Activa</h2>
             <button onclick="exportToExcel()" class="text-xs font-bold text-roseGold-600 bg-roseGold-50 px-3 py-1.5 rounded-xl border border-roseGold-100 flex items-center gap-1">
-                <i class="fa-solid fa-file-excel text-sm"></i> Excel
+                <i class="fa-solid fa-file-excel text-sm"></i> Excel (.xlsx)
             </button>
         </div>
         <div id="clientes-container" class="space-y-3"></div>
@@ -313,7 +325,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON EXPORTACIÓN HTML NATURA PARA EXCEL (.XLS) -->
+    <!-- LÓGICA DE JAVASCRIPT CON GOOGLE CALENDAR Y MÚLTIPLES PROPIEDADES -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -332,6 +344,81 @@
                 btns.forEach(btn => btn.style.display = 'none');
             }
         });
+
+        // FUNCIONES DE MANEJO DINÁMICO DE PROPIEDADES MÚLTIPLES
+        function addPropiedadInput(value = '') {
+            const container = document.getElementById('propiedades-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center';
+            div.innerHTML = `
+                <input type="text" value="${value}" class="propiedad-item w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all" placeholder="Ej. Casa Villa Morra, Ref 102">
+                <button type="button" onclick="this.parentElement.remove()" class="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all text-xs">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function getPropiedadesArray() {
+            const inputs = document.querySelectorAll('.propiedad-item');
+            const props = [];
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    props.push(input.value.trim());
+                }
+            });
+            return props;
+        }
+
+        function setPropiedadesInputs(props) {
+            const container = document.getElementById('propiedades-container');
+            container.innerHTML = '';
+            if (Array.isArray(props) && props.length > 0) {
+                props.forEach(p => addPropiedadInput(p));
+            } else if (typeof props === 'string' && props.trim() !== '') {
+                addPropiedadInput(props);
+            } else {
+                addPropiedadInput('');
+            }
+        }
+
+        // AGENDAR VISITA DIRECTAMENTE EN GOOGLE CALENDAR
+        function scheduleInGoogleCalendar(nombre, fechaVisita, propiedades, ubicacion) {
+            if (!fechaVisita) return;
+            const start = new Date(fechaVisita);
+            if (isNaN(start.getTime())) return;
+
+            const end = new Date(start.getTime() + (60 * 60 * 1000)); // Duración predeterminada: 1 hora
+            
+            const formatISO = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
+            
+            const title = encodeURIComponent(`Visita Inmobiliaria: ${nombre}`);
+            const propsText = Array.isArray(propiedades) ? propiedades.join(', ') : propiedades;
+            const details = encodeURIComponent(`Cliente: ${nombre}\nInmueble(s): ${propsText || 'N/A'}\nLink Ubicación: ${ubicacion || 'Sin ubicación'}`);
+            const location = encodeURIComponent(ubicacion || '');
+            const dates = `${formatISO(start)}/${formatISO(end)}`;
+
+            const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+            window.open(calendarUrl, '_blank');
+        }
+
+        function scheduleNewVisitForClient(id) {
+            const targetId = String(id);
+            const c = clientes.find(item => String(item.id) === targetId);
+            if (!c) return;
+
+            const newDate = prompt(`Agendar nueva visita para ${c.nombre}.\nIngresá la fecha y hora (Ej: YYYY-MM-DDTHH:MM):`, c.fechaVisita || '');
+            if (newDate) {
+                c.fechaVisita = newDate;
+                c.estado = 'Visita Agendada';
+                localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
+                renderClientes();
+
+                if (confirm("¿Deseas sincronizar esta visita en tu Google Calendar?")) {
+                    scheduleInGoogleCalendar(c.nombre, newDate, c.propiedad, c.linkUbicacion);
+                }
+            }
+        }
 
         function checkLicenseStatus() {
             let startDate = localStorage.getItem('elle_license_start_date');
@@ -400,6 +487,11 @@
 
         function normalizeCliente(c) {
             if(!c) return null;
+            let props = c.propiedad || c.propiedadMostrada || '';
+            if (typeof props === 'string' && props.includes(';')) {
+                props = props.split(';').map(p => p.trim());
+            }
+
             return {
                 id: String(c.id || c.clientId || Date.now() + Math.random()),
                 nombre: c.nombre || c.nombreCliente || c.clientName || 'Cliente sin nombre',
@@ -408,7 +500,7 @@
                 tipo: c.tipo || c.tipoInmueble || 'Inmueble',
                 presupuesto: c.presupuesto || '',
                 zona: c.zona || c.zonaInteres || '',
-                propiedad: c.propiedad || c.propiedadMostrada || '',
+                propiedad: props,
                 linkUbicacion: c.linkUbicacion || '',
                 asesorMostro: c.asesorMostro || '',
                 asesorCaptador: c.asesorCaptador || '',
@@ -450,6 +542,7 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             const editId = document.getElementById('editClientId').value;
+            const propiedadesArr = getPropiedadesArray();
 
             const clienteData = {
                 id: editId ? String(editId) : String(Date.now()),
@@ -459,7 +552,7 @@
                 tipo: document.getElementById('tipoInmueble').value,
                 presupuesto: document.getElementById('presupuesto').value,
                 zona: document.getElementById('zonaInteres').value,
-                propiedad: document.getElementById('propiedadMostrada').value,
+                propiedad: propiedadesArr,
                 linkUbicacion: document.getElementById('linkUbicacion').value,
                 asesorMostro: document.getElementById('asesorMostro').value,
                 asesorCaptador: document.getElementById('asesorCaptador').value,
@@ -476,6 +569,14 @@
             }
 
             localStorage.setItem('elle_crm_clientes', JSON.stringify(clientes));
+            
+            // Preguntar para agendar en Google Calendar si hay fecha
+            if (clienteData.fechaVisita) {
+                if (confirm("¿Deseas agendar esta visita automáticamente en tu Google Calendar?")) {
+                    scheduleInGoogleCalendar(clienteData.nombre, clienteData.fechaVisita, clienteData.propiedad, clienteData.linkUbicacion);
+                }
+            }
+
             resetForm();
             renderClientes();
             switchTab('list');
@@ -484,6 +585,7 @@
         function resetForm() {
             document.getElementById('crm-form').reset();
             document.getElementById('editClientId').value = '';
+            setPropiedadesInputs([]);
             document.getElementById('form-title').innerText = 'Datos del Registro';
             document.getElementById('form-badge').innerText = 'Nuevo Prospecto';
             document.getElementById('btn-save-text').innerText = 'Cargar Cliente al CRM';
@@ -502,7 +604,7 @@
             document.getElementById('tipoInmueble').value = c.tipo || 'Departamento';
             document.getElementById('presupuesto').value = c.presupuesto || '';
             document.getElementById('zonaInteres').value = c.zona || '';
-            document.getElementById('propiedadMostrada').value = c.propiedad || '';
+            setPropiedadesInputs(c.propiedad);
             document.getElementById('linkUbicacion').value = c.linkUbicacion || '';
             document.getElementById('asesorMostro').value = c.asesorMostro || '';
             document.getElementById('asesorCaptador').value = c.asesorCaptador || '';
@@ -550,46 +652,52 @@
                 return;
             }
 
-            container.innerHTML = clientes.map(c => `
-                <div class="bg-sand p-4 rounded-2xl border border-roseGold-100 shadow-sm space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-sm font-bold text-chicDark">${c.nombre}</h3>
-                            <p class="text-xs text-roseGold-600 font-medium"><i class="fa-brands fa-whatsapp"></i> ${c.telefono}</p>
+            container.innerHTML = clientes.map(c => {
+                const propsDisplay = Array.isArray(c.propiedad) ? c.propiedad.join(' | ') : (c.propiedad || 'N/A');
+                
+                return `
+                    <div class="bg-sand p-4 rounded-2xl border border-roseGold-100 shadow-sm space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-sm font-bold text-chicDark">${c.nombre}</h3>
+                                <p class="text-xs text-roseGold-600 font-medium"><i class="fa-brands fa-whatsapp"></i> ${c.telefono}</p>
+                            </div>
+                            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-200 text-roseGold-600">
+                                ${c.estado}
+                            </span>
                         </div>
-                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-roseGold-200 text-roseGold-600">
-                            ${c.estado}
-                        </span>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-roseGold-100">
-                        <div><strong class="text-slate-400">Tipo:</strong> ${c.tipo}</div>
-                        <div><strong class="text-slate-400">Presupuesto:</strong> USD ${c.presupuesto || 'N/A'}</div>
-                        <div><strong class="text-slate-400">Zona:</strong> ${c.zona || 'N/A'}</div>
-                        <div><strong class="text-slate-400">Origen:</strong> ${c.origen}</div>
-                        ${c.propiedad ? `<div class="col-span-2"><strong class="text-slate-400">Propiedad:</strong> ${c.propiedad}</div>` : ''}
-                        ${c.asesorMostro ? `<div><strong class="text-slate-400">Mostró:</strong> ${c.asesorMostro}</div>` : ''}
-                        ${c.asesorCaptador ? `<div><strong class="text-slate-400">Captador:</strong> ${c.asesorCaptador}</div>` : ''}
-                    </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-roseGold-100">
+                            <div><strong class="text-slate-400">Tipo:</strong> ${c.tipo}</div>
+                            <div><strong class="text-slate-400">Presupuesto:</strong> USD ${c.presupuesto || 'N/A'}</div>
+                            <div><strong class="text-slate-400">Zona:</strong> ${c.zona || 'N/A'}</div>
+                            <div><strong class="text-slate-400">Origen:</strong> ${c.origen}</div>
+                            <div class="col-span-2"><strong class="text-slate-400">Inmueble(s):</strong> ${propsDisplay}</div>
+                            ${c.fechaVisita ? `<div class="col-span-2 text-roseGold-600 font-bold"><i class="fa-regular fa-clock mr-1"></i>Visita: ${c.fechaVisita.replace('T', ' ')}</div>` : ''}
+                        </div>
 
-                    <div class="flex gap-2 pt-1">
-                        <button onclick="sendWhatsApp('${c.id}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm">
-                            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
-                        </button>
-                        ${c.linkUbicacion ? `
-                            <a href="${c.linkUbicacion}" target="_blank" class="px-3 py-2 bg-roseGold-50 text-roseGold-600 rounded-xl text-xs font-bold flex items-center gap-1 border border-roseGold-200">
-                                <i class="fa-solid fa-map-location-dot"></i> Mapa
-                            </a>
-                        ` : ''}
-                        <button onclick="editCliente('${c.id}')" class="px-3 py-2 bg-white text-slate-600 rounded-xl text-xs font-bold border border-slate-200">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteCliente('${c.id}')" class="px-3 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <button onclick="sendWhatsApp('${c.id}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                            </button>
+                            <button onclick="scheduleNewVisitForClient('${c.id}')" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm" title="Agendar otra visita">
+                                <i class="fa-solid fa-calendar-plus"></i> Visita
+                            </button>
+                            ${c.linkUbicacion ? `
+                                <a href="${c.linkUbicacion}" target="_blank" class="px-3 py-2 bg-roseGold-50 text-roseGold-600 rounded-xl text-xs font-bold flex items-center gap-1 border border-roseGold-200">
+                                    <i class="fa-solid fa-map-location-dot"></i> Mapa
+                                </a>
+                            ` : ''}
+                            <button onclick="editCliente('${c.id}')" class="px-3 py-2 bg-white text-slate-600 rounded-xl text-xs font-bold border border-slate-200">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteCliente('${c.id}')" class="px-3 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function sendWhatsApp(id) {
@@ -597,9 +705,11 @@
             const c = clientes.find(item => String(item.id) === targetId);
             if(!c) return;
 
+            const propsText = Array.isArray(c.propiedad) ? c.propiedad.join(', ') : c.propiedad;
+
             let msg = customMessageTemplate
                 .replace(/{nombre}/g, c.nombre || 'Cliente')
-                .replace(/{propiedad}/g, c.propiedad || 'la propiedad de interés')
+                .replace(/{propiedad}/g, propsText || 'la propiedad de interés')
                 .replace(/{zona}/g, c.zona || 'la zona consultada');
 
             let cleanPhone = String(c.telefono).replace(/\D/g, '');
@@ -656,79 +766,38 @@
             reader.readAsText(file);
         }
 
-        // FUNCIÓN DE EXPORTACIÓN DIRECTA A HOJA DE CÁLCULO EXCEL (.XLS) GARANTIZANDO COLUMNAS
+        // EXPORTACIÓN A EXCEL NATIVO REAL (.XLSX)
         function exportToExcel() {
             if(clientes.length === 0) return alert("No hay datos para exportar.");
-            
-            let tableHTML = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-                <head>
-                    <meta charset="utf-8">
-                    <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Cartera Clientes</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-                </head>
-                <body>
-                    <table border="1">
-                        <thead>
-                            <tr style="background-color: #f2a690; color: #ffffff; font-weight: bold;">
-                                <th>Nombre Cliente</th>
-                                <th>Telefono</th>
-                                <th>Origen Lead</th>
-                                <th>Tipo Inmueble</th>
-                                <th>Presupuesto USD</th>
-                                <th>Zona Interes</th>
-                                <th>Propiedad Mostrada</th>
-                                <th>Link Ubicacion</th>
-                                <th>Asesor Mostro</th>
-                                <th>Asesor Captador</th>
-                                <th>Contacto Captador</th>
-                                <th>Estado</th>
-                                <th>Fecha Visita</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
 
-            clientes.forEach(c => {
-                tableHTML += `
-                    <tr>
-                        <td>${c.nombre || ''}</td>
-                        <td style="mso-number-format:'\\@';">${c.telefono || ''}</td>
-                        <td>${c.origen || ''}</td>
-                        <td>${c.tipo || ''}</td>
-                        <td>${c.presupuesto || ''}</td>
-                        <td>${c.zona || ''}</td>
-                        <td>${c.propiedad || ''}</td>
-                        <td>${c.linkUbicacion || ''}</td>
-                        <td>${c.asesorMostro || ''}</td>
-                        <td>${c.asesorCaptador || ''}</td>
-                        <td style="mso-number-format:'\\@';">${c.contactoCaptador || ''}</td>
-                        <td>${c.estado || ''}</td>
-                        <td>${c.fechaVisita || ''}</td>
-                    </tr>
-                `;
+            if (typeof XLSX === 'undefined') {
+                return alert("Error al cargar el motor de Excel. Verifica tu conexión a internet e inténtalo de nuevo.");
+            }
+
+            const excelData = clientes.map(c => {
+                const propsStr = Array.isArray(c.propiedad) ? c.propiedad.join(' | ') : (c.propiedad || '');
+                return {
+                    "Nombre Cliente": c.nombre || '',
+                    "Teléfono": c.telefono || '',
+                    "Origen Lead": c.origen || '',
+                    "Tipo Inmueble": c.tipo || '',
+                    "Presupuesto USD": c.presupuesto || '',
+                    "Zona Interés": c.zona || '',
+                    "Propiedad(es) Interés": propsStr,
+                    "Link Ubicación": c.linkUbicacion || '',
+                    "Asesor Mostró": c.asesorMostro || '',
+                    "Asesor Captador": c.asesorCaptador || '',
+                    "Contacto Captador": c.contactoCaptador || '',
+                    "Estado": c.estado || '',
+                    "Fecha Visita": c.fechaVisita || ''
+                };
             });
 
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </body>
-                </html>
-            `;
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Cartera Clientes");
 
-            const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `cartera_clientes_elle_crm.xls`;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
+            XLSX.writeFile(workbook, `cartera_clientes_elle_crm_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         function getDeviceId() {
