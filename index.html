@@ -204,7 +204,7 @@
         </form>
     </main>
 
-    <!-- PESTAÑA 2: LISTA DE CLIENTES -->
+    <!-- PESTAÑA 2: LISTA DE CLIENTES Y BUSCADOR -->
     <section id="tab-list" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-roseGold-100 shadow-xl shadow-roseGold-500/5 hidden space-y-4">
         <div class="pb-3 border-b border-roseGold-100 flex justify-between items-center">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartera Activa</h2>
@@ -212,6 +212,18 @@
                 <i class="fa-solid fa-file-excel text-sm"></i> Excel (.xlsx)
             </button>
         </div>
+
+        <!-- BUSCADOR DE CLIENTES Y TELÉFONOS EN TIEMPO REAL -->
+        <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </div>
+            <input type="text" id="search-input" oninput="renderClientes()" placeholder="Buscar por nombre o teléfono..." class="w-full pl-10 pr-10 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+            <button type="button" onclick="clearSearch()" id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 hidden">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
         <div id="clientes-container" class="space-y-3"></div>
     </section>
 
@@ -311,7 +323,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON GOOGLE CALENDAR (OPCIÓN 1) Y BLOQUES DE MAPAS MÚLTIPLES -->
+    <!-- LÓGICA DE JAVASCRIPT Y BÚSQUEDA DE CLIENTES -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -331,7 +343,13 @@
             }
         });
 
-        // BLOQUE DINÁMICO DE INMUEBLES Y SUS UBICACIONES INDIVIDUALES
+        // FUNCIONALIDAD DE BÚSQUEDA EN TIEMPO REAL
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = '';
+            renderClientes();
+        }
+
         function addInmuebleBlock(nombre = '', mapLink = '') {
             const container = document.getElementById('inmuebles-container');
             const div = document.createElement('div');
@@ -388,7 +406,6 @@
             }
         }
 
-        // AGENDAR VISITA Y APLICAR OPCIÓN 1 (GOOGLE CALENDAR Y LUEGO OFRECER WHATSAPP)
         function scheduleInGoogleCalendar(cliente) {
             if (!cliente || !cliente.fechaVisita) return;
             const start = new Date(cliente.fechaVisita);
@@ -412,7 +429,6 @@
             const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`;
             window.open(calendarUrl, '_blank');
 
-            // OPCIÓN 1: Al regresar de Calendar, ofrecer confirmar por WhatsApp
             setTimeout(() => {
                 if (confirm(`¿Deseas enviar la confirmación de la cita por WhatsApp a ${cliente.nombre}?`)) {
                     sendWhatsAppConfirmation(cliente);
@@ -658,19 +674,39 @@
 
         function renderClientes() {
             const container = document.getElementById('clientes-container');
+            const searchInput = document.getElementById('search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+            if (clearBtn) {
+                if (query.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+
+            // Filtrar clientes según el término de búsqueda
+            const filteredClientes = clientes.filter(c => {
+                if (!query) return true;
+                const matchNombre = String(c.nombre || '').toLowerCase().includes(query);
+                const matchTelefono = String(c.telefono || '').toLowerCase().includes(query);
+                return matchNombre || matchTelefono;
+            });
+
             document.getElementById('count-badge').innerText = clientes.length;
 
-            if(clientes.length === 0) {
+            if(filteredClientes.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-10 text-slate-400">
                         <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
-                        <p class="text-xs font-semibold">No hay clientes cargados en la cartera.</p>
+                        <p class="text-xs font-semibold">${query ? 'No se encontraron clientes que coincidan.' : 'No hay clientes cargados en la cartera.'}</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = clientes.map(c => {
+            container.innerHTML = filteredClientes.map(c => {
                 let inmueblesHTML = '';
                 if (Array.isArray(c.propiedad) && c.propiedad.length > 0) {
                     inmueblesHTML = c.propiedad.map(i => `
