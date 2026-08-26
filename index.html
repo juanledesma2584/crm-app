@@ -97,7 +97,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-bold text-slate-700">WhatsApp / Teléfono *</label>
-                        <button type="button" onclick="pickContact('telefono', 'nombreCliente')" class="text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                        <button type="button" onclick="pickContact('telefono', 'nombreCliente')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
                             <i class="fa-solid fa-address-book"></i> Agenda
                         </button>
                     </div>
@@ -171,7 +171,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-bold text-slate-700">Contacto Asesor Captador</label>
-                        <button type="button" onclick="pickContact('contactoCaptador', 'asesorCaptador')" class="text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                        <button type="button" onclick="pickContact('contactoCaptador', 'asesorCaptador')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
                             <i class="fa-solid fa-address-book"></i> Agenda
                         </button>
                     </div>
@@ -313,7 +313,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON EXPORTACIÓN A EXCEL COMPLETA (13 COLUMNAS) -->
+    <!-- LÓGICA DE JAVASCRIPT CON FORMATO DE TEXTO EXPLICITO PARA TELÉFONOS EN EXCEL -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -326,6 +326,11 @@
             renderClientes();
             document.getElementById('msg-template-input').value = customMessageTemplate;
             getDeviceId();
+
+            if (!('contacts' in navigator && 'select' in navigator.contacts)) {
+                const btns = document.querySelectorAll('.contact-picker-btn');
+                btns.forEach(btn => btn.style.display = 'none');
+            }
         });
 
         function checkLicenseStatus() {
@@ -390,8 +395,6 @@
                 } catch (err) {
                     console.log("Acceso a contactos cancelado.");
                 }
-            } else {
-                alert("Tu navegador o dispositivo no soporta la selección directa de contactos. Escribe el número manualmente.");
             }
         }
 
@@ -653,7 +656,7 @@
             reader.readAsText(file);
         }
 
-        // FUNCIÓN EXPORTAR EXCEL/CSV COMPLETA CON TODAS LAS 13 COLUMNAS DEL FORMULARIO
+        // FUNCIÓN EXPORTAR EXCEL CON FORMATO DE TEXTO EXPLICITO `="..."` PARA NÚMEROS TELEFÓNICOS
         function exportToCSV() {
             if(clientes.length === 0) return alert("No hay datos para exportar.");
             
@@ -661,7 +664,7 @@
 
             clientes.forEach(c => {
                 let nombre = String(c.nombre || '').replace(/;/g, ',');
-                let telefono = String(c.telefono || '').replace(/;/g, ',');
+                let telefono = String(c.telefono || '').replace(/;/g, '');
                 let origen = String(c.origen || '').replace(/;/g, ',');
                 let tipo = String(c.tipo || '').replace(/;/g, ',');
                 let presupuesto = String(c.presupuesto || '').replace(/;/g, ',');
@@ -670,11 +673,15 @@
                 let linkUbicacion = String(c.linkUbicacion || '').replace(/;/g, ',');
                 let asesorMostro = String(c.asesorMostro || '').replace(/;/g, ',');
                 let asesorCaptador = String(c.asesorCaptador || '').replace(/;/g, ',');
-                let contactoCaptador = String(c.contactoCaptador || '').replace(/;/g, ',');
+                let contactoCaptador = String(c.contactoCaptador || '').replace(/;/g, '');
                 let estado = String(c.estado || '').replace(/;/g, ',');
                 let fechaVisita = String(c.fechaVisita || '').replace(/;/g, ',');
 
-                csvContent += `"${nombre}";"${telefono}";"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${linkUbicacion}";"${asesorMostro}";"${asesorCaptador}";"${contactoCaptador}";"${estado}";"${fechaVisita}"\n`;
+                // Formato `="número"` fuerza a Excel a tratarlo como texto plano sin notación científica
+                let telFormatted = telefono ? `="${telefono}"` : '""';
+                let captadorTelFormatted = contactoCaptador ? `="${contactoCaptador}"` : '""';
+
+                csvContent += `"${nombre}";${telFormatted};"${origen}";"${tipo}";"${presupuesto}";"${zona}";"${propiedad}";"${linkUbicacion}";"${asesorMostro}";"${asesorCaptador}";${captadorTelFormatted};"${estado}";"${fechaVisita}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
