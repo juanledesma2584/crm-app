@@ -130,6 +130,8 @@
                         <option value="Dúplex">Dúplex</option>
                         <option value="Penthouse">Penthouse</option>
                         <option value="Oficina / Local">Oficina / Local</option>
+                        <option value="Indeciso / Indefinido">Indeciso / Indefinido 🤔</option>
+                        <option value="Busca Opciones / Varios">Busca Opciones / Varios 🔍</option>
                     </select>
                 </div>
                 <div>
@@ -323,7 +325,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT Y BÚSQUEDA DE CLIENTES -->
+    <!-- LÓGICA DE JAVASCRIPT CON OPCIONES DE INMUEBLE EXPANDIDAS -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -343,7 +345,6 @@
             }
         });
 
-        // FUNCIONALIDAD DE BÚSQUEDA EN TIEMPO REAL
         function clearSearch() {
             const searchInput = document.getElementById('search-input');
             searchInput.value = '';
@@ -546,7 +547,7 @@
                 nombre: c.nombre || c.nombreCliente || c.clientName || 'Cliente sin nombre',
                 telefono: c.telefono || c.whatsapp || c.phone || '0981123456',
                 origen: c.origen || c.origenLead || 'Consulta',
-                tipo: c.tipo || c.tipoInmueble || 'Inmueble',
+                tipo: c.tipo || c.tipoInmueble || 'Departamento',
                 presupuesto: c.presupuesto || '',
                 zona: c.zona || c.zonaInteres || '',
                 propiedad: inmueblesList,
@@ -686,7 +687,6 @@
                 }
             }
 
-            // Filtrar clientes según el término de búsqueda
             const filteredClientes = clientes.filter(c => {
                 if (!query) return true;
                 const matchNombre = String(c.nombre || '').toLowerCase().includes(query);
