@@ -144,7 +144,8 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Presupuesto (USD)</label>
-                    <input type="number" id="presupuesto" placeholder="Ej. 120000" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
+                    <!-- CAMPO CON FORMATEO AUTOMÁTICO DE MILES EN TIEMPO REAL -->
+                    <input type="text" id="presupuesto" oninput="formatCurrencyInput(this)" placeholder="Ej. 120.000" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                 </div>
             </div>
 
@@ -338,7 +339,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT CON EXTRACCIÓN DE CONTACTO DESDE EL PORTAPAPELES PARA iOS -->
+    <!-- LÓGICA DE JAVASCRIPT CON FORMATEADOR DE SEPARADOR DE MILES -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -352,12 +353,31 @@
             document.getElementById('msg-template-input').value = customMessageTemplate;
             getDeviceId();
 
-            // En Android/Chrome muestra Agenda. En iOS oculta Agenda y resalta "Pegar Contacto".
             if (!('contacts' in navigator)) {
                 const btns = document.querySelectorAll('.contact-picker-btn');
                 btns.forEach(btn => btn.style.display = 'none');
             }
         });
+
+        // FUNCIONES AUXILIARES PARA MONEDA / SEPARADOR DE MILES
+        function formatNumberWithDots(val) {
+            if (!val && val !== 0) return '';
+            let cleanVal = String(val).replace(/\D/g, '');
+            if (!cleanVal) return '';
+            return parseInt(cleanVal, 10).toLocaleString('de-DE');
+        }
+
+        function formatCurrencyInput(input) {
+            let cursorPosition = input.selectionStart;
+            let originalLength = input.value.length;
+            
+            let formatted = formatNumberWithDots(input.value);
+            input.value = formatted;
+
+            let newLength = input.value.length;
+            cursorPosition = cursorPosition + (newLength - originalLength);
+            input.setSelectionRange(cursorPosition, cursorPosition);
+        }
 
         async function pickContact(phoneFieldId, nameFieldId) {
             if ('contacts' in navigator) {
@@ -387,23 +407,20 @@
             }
         }
 
-        // FUNCIÓN INTELIGENTE PARA PEGAR CONTACTOS EN iPHONE
         async function pasteContactFromClipboard(phoneFieldId, nameFieldId) {
             try {
                 const text = await navigator.clipboard.readText();
                 if (!text) return alert("El portapapeles está vacío. Copiá un contacto primero.");
 
-                // Intentar extraer número de teléfono (secuencia de números de al menos 6 dígitos)
                 const phoneMatch = text.match(/[\+\d][\d\s\-\(\)]{6,}\d/);
                 if (phoneMatch) {
                     let cleanPhone = phoneMatch[0].replace(/[^\d+]/g, '');
                     document.getElementById(phoneFieldId).value = cleanPhone;
                 } else {
-                    alert("No se detectó un número de teléfono válido en el texto copiado.");
+                    alert("No se detectó un número de teléfono válido.");
                     return;
                 }
 
-                // Intentar extraer nombre si viene de una vCard/Contacto compartido
                 if (nameFieldId) {
                     const nameMatch = text.match(/FN:(.+)/i) || text.match(/N:(.+)/i);
                     if (nameMatch && nameMatch[1]) {
@@ -412,7 +429,7 @@
                     }
                 }
             } catch (err) {
-                alert("Para pegar el contacto, permite el acceso al portapapeles en tu navegador.");
+                alert("Permití el acceso al portapapeles para pegar contactos.");
             }
         }
 
@@ -593,7 +610,7 @@
                 telefono: c.telefono || c.whatsapp || c.phone || '0981123456',
                 origen: c.origen || c.origenLead || 'Pautas / Publicidad Digital',
                 tipo: c.tipo || c.tipoInmueble || 'Dpto 2 Dormitorios',
-                presupuesto: c.presupuesto || '',
+                presupuesto: c.presupuesto ? String(c.presupuesto).replace(/\D/g, '') : '',
                 zona: c.zona || c.zonaInteres || '',
                 propiedad: inmueblesList,
                 linkUbicacion: c.linkUbicacion || '',
@@ -628,13 +645,15 @@
             const editId = document.getElementById('editClientId').value;
             const inmuebles = getInmueblesData();
 
+            const rawPresupuesto = document.getElementById('presupuesto').value.replace(/\D/g, '');
+
             const clienteData = {
                 id: editId ? String(editId) : String(Date.now()),
                 nombre: document.getElementById('nombreCliente').value,
                 telefono: document.getElementById('telefono').value,
                 origen: document.getElementById('origenLead').value,
                 tipo: document.getElementById('tipoInmueble').value,
-                presupuesto: document.getElementById('presupuesto').value,
+                presupuesto: rawPresupuesto,
                 zona: document.getElementById('zonaInteres').value,
                 propiedad: inmuebles,
                 linkUbicacion: inmuebles[0]?.mapa || '',
@@ -683,7 +702,7 @@
             document.getElementById('telefono').value = c.telefono || '';
             document.getElementById('origenLead').value = c.origen || 'Pautas / Publicidad Digital';
             document.getElementById('tipoInmueble').value = c.tipo || 'Dpto 2 Dormitorios';
-            document.getElementById('presupuesto').value = c.presupuesto || '';
+            document.getElementById('presupuesto').value = formatNumberWithDots(c.presupuesto);
             document.getElementById('zonaInteres').value = c.zona || '';
             setInmueblesData(c.propiedad);
             document.getElementById('asesorMostro').value = c.asesorMostro || '';
@@ -773,6 +792,8 @@
                     inmueblesHTML = '<span class="text-slate-400">N/A</span>';
                 }
 
+                const presupuestoDisplay = c.presupuesto ? formatNumberWithDots(c.presupuesto) : 'N/A';
+
                 return `
                     <div class="bg-sand p-4 rounded-2xl border border-roseGold-100 shadow-sm space-y-3">
                         <div class="flex justify-between items-start">
@@ -787,7 +808,7 @@
 
                         <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-roseGold-100">
                             <div><strong class="text-slate-400">Tipo:</strong> ${c.tipo}</div>
-                            <div><strong class="text-slate-400">Presupuesto:</strong> USD ${c.presupuesto || 'N/A'}</div>
+                            <div><strong class="text-slate-400">Presupuesto:</strong> USD ${presupuestoDisplay}</div>
                             <div><strong class="text-slate-400">Zona:</strong> ${c.zona || 'N/A'}</div>
                             <div><strong class="text-slate-400">Origen:</strong> ${c.origen}</div>
                             <div class="col-span-2 border-t border-slate-100 pt-1.5 mt-0.5">
@@ -908,7 +929,7 @@
                     "Teléfono": c.telefono || '',
                     "Origen Lead": c.origen || '',
                     "Tipo Inmueble": c.tipo || '',
-                    "Presupuesto USD": c.presupuesto || '',
+                    "Presupuesto USD": c.presupuesto ? formatNumberWithDots(c.presupuesto) : '',
                     "Zona Interés": c.zona || '',
                     "Propiedades de Interés": propsStr,
                     "Links Ubicaciones": mapsStr,
