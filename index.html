@@ -101,9 +101,14 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-bold text-slate-700">WhatsApp / Teléfono *</label>
-                        <button type="button" onclick="pickContact('telefono', 'nombreCliente')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
-                            <i class="fa-solid fa-address-book"></i> Agenda
-                        </button>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="pickContact('telefono', 'nombreCliente')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-address-book"></i> Agenda
+                            </button>
+                            <button type="button" onclick="pasteContactFromClipboard('telefono', 'nombreCliente')" class="paste-contact-btn text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all flex items-center gap-1">
+                                <i class="fa-regular fa-clipboard"></i> Pegar Contacto
+                            </button>
+                        </div>
                     </div>
                     <input type="tel" id="telefono" required placeholder="Ej. 0981123456" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                 </div>
@@ -174,9 +179,14 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-bold text-slate-700">Contacto Asesor Captador</label>
-                        <button type="button" onclick="pickContact('contactoCaptador', 'asesorCaptador')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
-                            <i class="fa-solid fa-address-book"></i> Agenda
-                        </button>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="pickContact('contactoCaptador', 'asesorCaptador')" class="contact-picker-btn text-[10px] font-bold text-roseGold-600 bg-roseGold-50 px-2 py-0.5 rounded-lg border border-roseGold-200 hover:bg-roseGold-100 transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-address-book"></i> Agenda
+                            </button>
+                            <button type="button" onclick="pasteContactFromClipboard('contactoCaptador', 'asesorCaptador')" class="paste-contact-btn text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all flex items-center gap-1">
+                                <i class="fa-regular fa-clipboard"></i> Pegar
+                            </button>
+                        </div>
                     </div>
                     <input type="tel" id="contactoCaptador" placeholder="Ej. 0981123456" class="w-full px-4 py-3 bg-sand text-slate-800 text-sm rounded-2xl border border-roseGold-100 focus:bg-white focus:border-roseGold-400 outline-none transition-all">
                 </div>
@@ -328,7 +338,7 @@
         <span class="text-xs font-bold tracking-widest uppercase text-slate-400">ELLE Real Estate</span>
     </footer>
 
-    <!-- LÓGICA DE JAVASCRIPT Y BUSCADOR AMPLIADO -->
+    <!-- LÓGICA DE JAVASCRIPT CON EXTRACCIÓN DE CONTACTO DESDE EL PORTAPAPELES PARA iOS -->
     <script>
         let clientes = JSON.parse(localStorage.getItem('elle_crm_clientes')) || [];
         let activeTab = 'form';
@@ -342,6 +352,7 @@
             document.getElementById('msg-template-input').value = customMessageTemplate;
             getDeviceId();
 
+            // En Android/Chrome muestra Agenda. En iOS oculta Agenda y resalta "Pegar Contacto".
             if (!('contacts' in navigator)) {
                 const btns = document.querySelectorAll('.contact-picker-btn');
                 btns.forEach(btn => btn.style.display = 'none');
@@ -372,7 +383,36 @@
                     console.log("Acceso a contactos cancelado.");
                 }
             } else {
-                alert("Tu dispositivo actual no admite la agenda rápida. Podés ingresar el número manualmente.");
+                pasteContactFromClipboard(phoneFieldId, nameFieldId);
+            }
+        }
+
+        // FUNCIÓN INTELIGENTE PARA PEGAR CONTACTOS EN iPHONE
+        async function pasteContactFromClipboard(phoneFieldId, nameFieldId) {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text) return alert("El portapapeles está vacío. Copiá un contacto primero.");
+
+                // Intentar extraer número de teléfono (secuencia de números de al menos 6 dígitos)
+                const phoneMatch = text.match(/[\+\d][\d\s\-\(\)]{6,}\d/);
+                if (phoneMatch) {
+                    let cleanPhone = phoneMatch[0].replace(/[^\d+]/g, '');
+                    document.getElementById(phoneFieldId).value = cleanPhone;
+                } else {
+                    alert("No se detectó un número de teléfono válido en el texto copiado.");
+                    return;
+                }
+
+                // Intentar extraer nombre si viene de una vCard/Contacto compartido
+                if (nameFieldId) {
+                    const nameMatch = text.match(/FN:(.+)/i) || text.match(/N:(.+)/i);
+                    if (nameMatch && nameMatch[1]) {
+                        let cleanName = nameMatch[1].replace(/;/g, ' ').trim();
+                        document.getElementById(nameFieldId).value = cleanName;
+                    }
+                }
+            } catch (err) {
+                alert("Para pegar el contacto, permite el acceso al portapapeles en tu navegador.");
             }
         }
 
@@ -678,7 +718,6 @@
             }
         }
 
-        // BUSCADOR AMPLIADO MULTICRITERIO
         function renderClientes() {
             const container = document.getElementById('clientes-container');
             const searchInput = document.getElementById('search-input');
